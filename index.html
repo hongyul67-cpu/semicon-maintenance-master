@@ -1,0 +1,1418 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>반도체설비보전 마스터</title>
+<!-- 결과 제출 위젯: ?rc=<교사 Apps Script exec> 링크로 열 때만 제출 버튼이 나타납니다 -->
+<script src="https://hongyul67-cpu.github.io/links/collector.js" data-tool="반도체설비보전 마스터"></script>
+<!-- 공용 연출 위젯 -->
+<script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
+<style>
+:root{
+  --bg:#0c1017; --panel:#161c27; --panel2:#1e2634; --line:#2c3648;
+  --ink:#e9eefa; --dim:#98a5bd; --dim2:#65708a;
+  --si:#7cc6ff;      /* 실리콘 블루 */
+  --si2:#3b9bff;
+  --wafer:#c9d6e6;
+  --plasma:#b98cff;  /* 플라즈마 퍼플 */
+  --good:#3ad995; --bad:#ff5f6d; --gold:#ffd166; --warn:#ffa53b;
+  --r:16px; --sh:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+  background:radial-gradient(1100px 640px at 75% -12%,#1a2536,#0a0d13 62%);
+  color:var(--ink); min-height:100vh; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:960px;margin:0 auto;padding:12px 13px 96px}
+h1,h2,h3,h4,p{margin:0}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit}
+.hidden{display:none!important}
+
+/* ── 상단바 ── */
+.topbar{position:sticky;top:0;z-index:50;display:flex;padding:9px 13px;margin:0 0 12px;
+  background:rgba(12,16,23,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topin{width:100%;max-width:960px;margin:0 auto;display:flex;align-items:center;gap:9px}
+.logo{font-weight:800;font-size:16px;letter-spacing:-.4px;white-space:nowrap}
+.logo span{color:var(--si)}
+.tbspace{flex:1}
+.tbtn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  padding:7px 11px;font-size:12.5px;font-weight:700;color:var(--dim)}
+.tbtn:hover{color:var(--ink);border-color:var(--si)}
+
+/* ── 카드/버튼 공통 ── */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+  border-radius:var(--r);padding:15px;box-shadow:var(--sh)}
+.big{display:block;width:100%;text-align:left;background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:10px;
+  transition:transform .12s,border-color .12s}
+.big:hover{border-color:var(--si);transform:translateY(-2px)}
+.big .bt{font-size:15.5px;font-weight:800}
+.big .bd{font-size:12.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+.btn{background:linear-gradient(180deg,var(--si2),#2472c8);border-radius:12px;padding:12px 18px;
+  font-size:14.5px;font-weight:800;color:#fff;box-shadow:0 6px 16px rgba(59,155,255,.28)}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--dim);box-shadow:none}
+.btn.ghost:hover{color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default;box-shadow:none}
+.row{display:flex;gap:9px;flex-wrap:wrap}
+.pill{display:inline-block;background:#0e1622;border:1px solid var(--line);border-radius:999px;
+  padding:3px 10px;font-size:11.5px;color:var(--dim);font-weight:700}
+.sect{font-size:13px;font-weight:800;color:var(--dim);margin:18px 0 9px;letter-spacing:.2px}
+.note{font-size:12.5px;color:var(--dim);line-height:1.65}
+b.hi{color:var(--si)}
+em.hi2{color:var(--gold);font-style:normal;font-weight:700}
+
+/* ── 팹 라인 진행 그림 ── */
+.fab{position:relative;background:#0a1220;border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 12px 8px;overflow:hidden}
+.fab .fl{font-size:11.5px;color:var(--dim2);font-weight:700;margin-bottom:6px}
+.fabline{position:relative;height:74px}
+.rail{position:absolute;left:2%;right:2%;top:46px;height:4px;border-radius:3px;
+  background:linear-gradient(90deg,#1b2740,#243550)}
+.railfill{position:absolute;left:2%;top:46px;height:4px;border-radius:3px;width:0;
+  background:linear-gradient(90deg,var(--si2),var(--plasma));transition:width .7s cubic-bezier(.4,1.3,.5,1);
+  box-shadow:0 0 12px rgba(124,198,255,.6)}
+.stn{position:absolute;top:22px;transform:translateX(-50%);text-align:center;width:32px}
+.stnbox{width:26px;height:26px;margin:0 auto;border-radius:7px;background:#16202f;border:1px solid #2b3a52;
+  display:flex;align-items:center;justify-content:center;font-size:13px;transition:.3s}
+.stn.on .stnbox{background:linear-gradient(180deg,#2a4c7a,#1d3557);border-color:var(--si);
+  box-shadow:0 0 14px rgba(59,155,255,.55)}
+.stn .sl{font-size:9.5px;color:var(--dim2);margin-top:22px;white-space:nowrap}
+.stn.on .sl{color:var(--si)}
+.waf{position:absolute;top:38px;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,#fff,var(--wafer) 45%,#7d8ea3);
+  box-shadow:0 0 14px rgba(201,214,230,.5);transition:left .7s cubic-bezier(.4,1.3,.5,1);
+  transform:translateX(-50%)}
+.waf::after{content:"";position:absolute;inset:5px;border-radius:50%;
+  border:1px solid rgba(70,90,120,.6)}
+
+/* ── 진행 막대 ── */
+.bar{height:8px;background:#111a27;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.barin{height:100%;width:0;background:linear-gradient(90deg,var(--si2),var(--good));transition:width .5s}
+
+/* ── 배우기 카드 ── */
+.lcard{min-height:230px}
+.lcard h3{font-size:18px;font-weight:800;margin-bottom:4px;line-height:1.35}
+.lcard .lead{font-size:13.5px;color:var(--si);font-weight:700;margin-bottom:10px}
+.lbody{font-size:14px;line-height:1.85;color:#dbe4f2}
+.lbody ul{margin:8px 0 0;padding-left:19px}
+.lbody li{margin:4px 0}
+.lbody table{width:100%;border-collapse:collapse;margin-top:9px;font-size:12.8px}
+.lbody th,.lbody td{border:1px solid var(--line);padding:6px 8px;text-align:left}
+.lbody th{background:#131c2a;color:var(--si);font-weight:700}
+.tipbox{margin-top:12px;background:#1a1408;border:1px solid #4a3a12;border-left:3px solid var(--gold);
+  border-radius:10px;padding:10px 12px;font-size:12.8px;line-height:1.7;color:#f2e2b6}
+.tipbox b{color:var(--gold)}
+.dots{display:flex;gap:5px;justify-content:center;margin:12px 0 4px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:#28334a}
+.dot.on{background:var(--si);box-shadow:0 0 8px rgba(124,198,255,.8)}
+
+/* ── 문제 ── */
+.qhead{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.qtext{font-size:15.5px;font-weight:700;line-height:1.6;margin-bottom:12px}
+.opt{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:14px;line-height:1.5;transition:.12s}
+.opt:hover{border-color:var(--si)}
+.opt.ok{background:rgba(58,217,149,.14);border-color:var(--good)}
+.opt.no{background:rgba(255,95,109,.14);border-color:var(--bad)}
+.opt.dim{opacity:.45}
+.exp{margin-top:10px;background:#101a26;border:1px solid var(--line);border-left:3px solid var(--si);
+  border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.7;color:#cfdcee}
+.exp b{color:var(--si)}
+
+/* ── 게임: 공정 순서 ── */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 13px;
+  font-size:13.5px;font-weight:700;transition:.12s}
+.chip:hover{border-color:var(--si)}
+.chip.used{opacity:.28;pointer-events:none}
+.slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:44px;
+  background:#0a1220;border:1px dashed var(--line);border-radius:12px;padding:8px}
+.slot{background:linear-gradient(180deg,#24405f,#1a2e46);border:1px solid var(--si);border-radius:10px;
+  padding:7px 11px;font-size:12.5px;font-weight:700}
+.slot i{font-style:normal;color:var(--si);margin-right:5px}
+
+/* ── 게임: 계산 ── */
+.calcbox{background:#0a1220;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.calcbox table{width:100%;border-collapse:collapse;font-size:13px}
+.calcbox td{padding:5px 6px;border-bottom:1px solid #1b2637}
+.calcbox td:first-child{color:var(--dim);width:52%}
+.calcbox td:last-child{text-align:right;font-weight:800;color:var(--si)}
+.numin{width:100%;background:#0d1622;border:1px solid var(--line);border-radius:12px;color:var(--ink);
+  padding:13px 14px;font-size:17px;font-weight:800;text-align:center;font-family:inherit;margin-top:10px}
+.numin:focus{outline:none;border-color:var(--si)}
+
+/* ── 결과 ── */
+.scorebig{font-size:52px;font-weight:900;text-align:center;letter-spacing:-2px;line-height:1.1}
+.scoresub{text-align:center;font-size:13px;color:var(--dim);margin-top:2px}
+.reslist{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.rdot{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;font-weight:800;background:#1a2434;color:var(--dim2);border:1px solid var(--line);
+  transform:scale(.6);opacity:0;transition:.25s}
+.rdot.show{transform:scale(1);opacity:1}
+.rdot.ok{background:rgba(58,217,149,.18);border-color:var(--good);color:var(--good)}
+.rdot.no{background:rgba(255,95,109,.18);border-color:var(--bad);color:var(--bad)}
+.wrongbox{margin-top:16px;background:#160f13;border:1px solid #43222b;border-radius:12px;padding:12px}
+.wrongbox h4{font-size:13.5px;color:var(--bad);margin-bottom:8px}
+.witem{font-size:12.8px;line-height:1.65;color:#e3cfd4;padding:8px 0;border-top:1px solid #2b1a20}
+.witem:first-of-type{border-top:none}
+.witem b{color:#ffb3ba}
+
+/* ── 하단 고정 ── */
+.footbar{position:fixed;left:0;right:0;bottom:0;z-index:45;background:rgba(12,16,23,.94);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:9px 13px}
+.footin{max-width:960px;margin:0 auto;display:flex;gap:9px}
+.footin .btn{flex:1;text-align:center}
+
+@media (max-width:520px){
+  .stn .sl{font-size:8.5px}
+  .lcard h3{font-size:16.5px}
+  .scorebig{font-size:44px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topin">
+  <div class="logo">🔬 반도체설비보전 <span>마스터</span></div>
+  <div class="tbspace"></div>
+  <button class="tbtn" id="btnHome">🏠 홈</button>
+</div></div>
+
+<div class="wrap">
+
+<!-- ══════════ 홈 ══════════ -->
+<section id="scHome">
+  <div class="fab" style="margin-bottom:14px">
+    <div class="fl">MY FAB LINE — 배우기를 끝낼수록 웨이퍼가 라인을 지나갑니다</div>
+    <div class="fabline" id="fabline"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <h2 style="font-size:17px;font-weight:800">반도체설비보전기능사 개념 잡기</h2>
+    <p class="note" style="margin-top:7px">
+      예전 이름은 <b class="hi">반도체장비유지보수기능사</b>, 2024년부터 <b class="hi">반도체설비보전기능사</b>로 바뀌었습니다.
+      필기는 60문항·60분, 100점 만점에 60점이면 합격입니다.<br>
+      <em class="hi2">처음이면 「📖 배우기」부터 하세요. 정답이 다 적혀 있고, 맞힐 필요가 없습니다.</em>
+      훑고 나서 게임으로 손에 익히고, 마지막에 테스트를 보면 됩니다.
+    </p>
+  </div>
+
+  <div class="sect">📖 1단계 · 배우기 <span class="pill" id="learnPill">0 / 10</span></div>
+  <div class="bar" style="margin-bottom:10px"><div class="barin" id="learnBar"></div></div>
+  <div id="chapList"></div>
+
+  <div class="sect">🎮 2단계 · 게임으로 익히기</div>
+  <button class="big" data-go="g1"><div class="bt">🧩 8대 공정 라인 세우기 <span class="pill" id="p_g1">–</span></div>
+    <div class="bd">웨이퍼가 지나가는 순서대로 공정을 놓습니다. 순서를 몸으로 외우는 게임.</div></button>
+  <button class="big" data-go="g2"><div class="bt">🚨 설비 이상 진단실 <span class="pill" id="p_g2">–</span></div>
+    <div class="bd">"챔버 압력이 안 떨어져요" 같은 증상을 보고 원인·조치를 고릅니다.</div></button>
+  <button class="big" data-go="g3"><div class="bt">📐 설비 계산소 <span class="pill" id="p_g3">–</span></div>
+    <div class="bd">MTBF·MTTR·가동률·OEE·신뢰도·공압 출력·옴의 법칙·베어링 안지름을 직접 계산해서 입력합니다.</div></button>
+
+  <div class="sect">🎯 3단계 · 실력 점검 (20문항)</div>
+  <button class="big" data-go="test"><div class="bt">🎯 종합 테스트 <span class="pill" id="p_test">–</span></div>
+    <div class="bd">10개 단원에서 골고루 20문항. 오답노트가 남고, 선생님 링크로 열었다면 결과를 제출할 수 있습니다.</div></button>
+
+  <p class="note" style="margin-top:18px;color:var(--dim2);font-size:11.5px">
+    ※ 이 도구는 공개된 출제기준·직무모형(반도체공정개론 / 신규설비 / 예방·사후·개량보전 / 자동화·공유압 / 안전관리)을
+    바탕으로 만든 <b>개념 학습용</b>입니다. 기출문제집·교재 문항은 자료 확보 후 추가됩니다.
+  </p>
+</section>
+
+<!-- ══════════ 배우기 ══════════ -->
+<section id="scLearn" class="hidden">
+  <div class="card lcard" id="lcard"></div>
+  <div class="dots" id="ldots"></div>
+</section>
+
+<!-- ══════════ 게임/테스트 공통 문제화면 ══════════ -->
+<section id="scQuiz" class="hidden">
+  <div id="hud" style="margin-bottom:10px"></div>
+  <div class="card" id="qcard"></div>
+</section>
+
+<!-- ══════════ 결과 ══════════ -->
+<section id="scResult" class="hidden">
+  <div class="card">
+    <div class="scorebig" id="resScore">0</div>
+    <div class="scoresub" id="resSub"></div>
+    <div class="reslist" id="resList"></div>
+    <div id="resWrong"></div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="resRetry" style="flex:1">🔁 다시 풀기</button>
+      <button class="btn ghost" id="resHome" style="flex:1">🏠 홈으로</button>
+    </div>
+    <button class="btn" id="resSubmit" style="width:100%;margin-top:9px;background:linear-gradient(180deg,#3ad995,#22a873)">
+      📨 선생님께 결과 제출
+    </button>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<div class="footbar hidden" id="footbar"><div class="footin" id="footin"></div></div>
+
+<script>
+/* =========================================================
+   반도체설비보전 마스터
+   - 배우기(정답 공개) → 게임 → 테스트 순서
+   - 새 문항/단원 추가 위치는 아래 [추가지점] 주석 참고
+   ========================================================= */
+const $=id=>document.getElementById(id);
+const LS='sbm_v1_';
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ─────────────────────────────────────────
+   [추가지점 1] 배우기 단원 — 수요일 자료 오면 여기에 cards 추가
+   ───────────────────────────────────────── */
+const CHAPTERS=[
+{id:'c1',icon:'🌐',title:'반도체와 팹, 그리고 설비보전이라는 일',sub:'내가 앞으로 무엇을 지키는 사람인지',cards:[
+ {h:'먼저, 겁먹지 말고 한 문단으로',lead:'이 자격증이 다루는 일',
+  body:`반도체 공장(<b class="hi">팹, FAB</b>)에는 수백 대의 장비가 24시간 돌아갑니다.
+  장비 한 대가 멈추면 그 안에 있던 웨이퍼 수백 장이 통째로 손해가 납니다.
+  그래서 <b class="hi">장비가 멈추기 전에 손보고, 멈추면 빨리 살리는 사람</b>이 필요합니다. 그게 설비보전 기술자입니다.
+  <br><br>딱 이게 전부입니다. 시험도 결국 이 세 덩어리를 묻습니다.
+  <ul>
+   <li>① 이 장비들이 <b>무슨 공정</b>을 하는가 (반도체 8대 공정)</li>
+   <li>② 장비를 이루는 <b>부품·요소기술</b>은 무엇인가 (진공·가스·공유압·전기·PLC)</li>
+   <li>③ 어떻게 <b>보전</b>하고 <b>안전</b>하게 일하는가 (PM/BM/CM, TPM, 안전관리)</li>
+  </ul>`,
+  tip:'<b>이름이 바뀌었습니다.</b> 반도체장비유지보수기능사 → <b>반도체설비보전기능사</b>(2024년~). 옛 이름으로 된 교재·기출도 내용은 거의 그대로 쓸 수 있습니다.'},
+ {h:'웨이퍼 — 모든 것이 시작되는 원판',lead:'모래(규소)에서 동그란 판까지',
+  body:`규소(Si)를 정제해 <b class="hi">잉곳(ingot)</b>이라는 기둥으로 키우고(초크랄스키법), 그걸 얇게 썰어 거울처럼 갈면 <b class="hi">웨이퍼</b>가 됩니다.
+  <ul>
+   <li>크기는 지름으로 부릅니다. 현재 주력은 <b>300mm(12인치)</b>, 예전엔 200mm(8인치).</li>
+   <li>웨이퍼가 클수록 한 장에서 나오는 칩이 많아 <b>원가가 싸집니다.</b></li>
+   <li>웨이퍼 한 장에서 <b>정상 칩이 나온 비율 = 수율(Yield)</b>. 팹의 성적표입니다.</li>
+   <li>수율을 깎아먹는 1순위 범인이 <b class="hi">파티클(먼지)</b> — 그래서 클린룸이 있습니다.</li>
+  </ul>`,
+  tip:'설비보전이 왜 중요한지 한 줄: <b>장비에서 파티클이 나오면 곧바로 수율이 떨어진다.</b> 청소·부품교체 주기를 지키는 이유가 이것입니다.'},
+ {h:'클린룸 — 사람이 제일 더럽다',lead:'ISO 등급, 숫자가 작을수록 깨끗',
+  body:`클린룸은 공기 중 먼지 개수로 등급을 매깁니다(<b class="hi">ISO 14644-1</b>, ISO Class 1~9).
+  <ul>
+   <li><b>숫자가 작을수록 깨끗</b>합니다. 노광 공정처럼 예민한 곳은 Class 1~3급.</li>
+   <li>천장에서 <b>ULPA/HEPA 필터</b>로 공기를 내리고 바닥으로 빼는 <b>수직층류</b> 방식.</li>
+   <li>실내는 바깥보다 압력이 높은 <b class="hi">양압(+)</b> — 문틈으로 먼지가 못 들어오게.</li>
+   <li>온도·습도도 일정하게(대략 23℃±1, 45%±5). 습도가 낮으면 정전기가 튑니다.</li>
+   <li>파티클 발생원 1위는 <b>사람</b>. 방진복·에어샤워·화장품/종이/연필 반입금지.</li>
+  </ul>`,
+  tip:'헷갈리는 곳: <b>양압 = 안이 더 높다</b>. 반대로 유해가스를 다루는 방은 새어나가면 안 되니 <b>음압</b>으로 잡기도 합니다. "지킬 게 안쪽이면 양압, 가둘 게 안쪽이면 음압"으로 외우세요.'},
+ {h:'전공정과 후공정',lead:'웨이퍼 위에서 만드는가, 잘라서 포장하는가',
+  body:`<table>
+   <tr><th>구분</th><th>하는 일</th><th>대표 장비</th></tr>
+   <tr><td><b>전공정</b><br>(FAB, Front-End)</td><td>웨이퍼 위에 회로를 그려 넣음<br>산화·포토·식각·증착·이온주입·금속배선</td><td>스캐너, 식각기, CVD, 이온주입기, CMP</td></tr>
+   <tr><td><b>후공정</b><br>(Back-End)</td><td>다 만든 웨이퍼를 검사·절단·포장<br>EDS → 패키징 → 최종테스트</td><td>프로버, 다이서, 본더, 몰딩기, 핸들러</td></tr>
+  </table>`,
+  tip:'<b>EDS</b>(Electrical Die Sorting)는 <u>자르기 전, 웨이퍼 상태에서</u> 칩을 하나씩 전기적으로 찍어보는 검사입니다. 불량이면 표시(잉킹)하거나 여분 회로로 <b>리페어</b>합니다.'},
+]},
+
+{id:'c2',icon:'⚙️',title:'반도체 8대 공정',sub:'웨이퍼가 칩이 되기까지의 순서',cards:[
+ {h:'순서부터 통째로',lead:'이 순서 하나면 절반은 먹고 들어갑니다',
+  body:`<b class="hi">웨이퍼 제조 → 산화 → 포토 → 식각 → 증착/이온주입 → 금속배선 → EDS → 패키징</b>
+  <br><br>중요한 건, 가운데 <b>포토 → 식각 → 증착</b> 묶음이 <b class="hi">수십 번 반복</b>된다는 점입니다.
+  층을 한 겹 쌓고, 그림을 그리고, 필요 없는 데를 깎아내고… 이걸 반복해 3차원 회로를 쌓아 올립니다.`,
+  tip:'외우는 요령: <b>"웨 · 산 · 포 · 식 · 증 · 금 · 이 · 패"</b> (웨이퍼-산화-포토-식각-증착-금속배선-EDS-패키징). 게임 「8대 공정 라인 세우기」에서 이 순서로 놓으면 됩니다.'},
+ {h:'① 산화 — 보호막이자 절연막',lead:'실리콘을 일부러 녹슬게 한다',
+  body:`고온(800~1200℃) 산화로에서 웨이퍼에 산소나 수증기를 흘려 <b class="hi">실리콘 산화막(SiO₂)</b>을 자라게 합니다.
+  <ul>
+   <li><b>건식 산화</b>(O₂): 느리지만 <b>얇고 치밀</b> → 게이트 산화막처럼 품질이 중요한 곳</li>
+   <li><b>습식 산화</b>(H₂O): 빠르고 <b>두껍게</b> → 소자 사이를 갈라놓는 절연막</li>
+   <li>역할: 절연 / 불순물 침투 차단(마스크) / 표면 보호</li>
+  </ul>`,
+  tip:'설비 쪽 포인트: 산화로(퍼니스)는 <b>온도 균일도</b>가 생명입니다. 열전대(TC) 교정, 히터 존별 제어, 석영(쿼츠) 튜브 관리가 보전 항목입니다.'},
+ {h:'② 포토 — 회로를 사진처럼 찍는다',lead:'도포 → 노광 → 현상',
+  body:`<ul>
+   <li><b>감광액(PR, Photo Resist) 도포</b> — 스피너로 웨이퍼를 돌려 고르게 (스핀 코팅)</li>
+   <li><b>노광(Exposure)</b> — <b class="hi">마스크(레티클)</b>의 회로 그림에 빛을 통과시켜 PR에 옮김. 장비는 <b>스테퍼/스캐너</b></li>
+   <li><b>현상(Develop)</b> — 빛 받은 부분(또는 안 받은 부분)을 씻어내 회로 모양이 드러남</li>
+  </ul>
+  광원은 파장이 짧을수록 미세하게 그릴 수 있습니다: KrF 248nm → <b>ArF 193nm</b>(+액침) → <b class="hi">EUV 13.5nm</b>.
+  <br>PR 종류: <b>양성(Positive)</b> = 빛 받은 곳이 녹아 없어짐 / <b>음성(Negative)</b> = 빛 받은 곳이 남음.`,
+  tip:'포토 구역이 <b>노란 불빛(옐로우 룸)</b>인 이유 — PR이 짧은 파장(자외선·파란빛)에 반응하기 때문에, 그 빛만 걷어낸 조명을 씁니다.'},
+ {h:'③ 식각 — 필요 없는 곳을 깎는다',lead:'습식 vs 건식',
+  body:`<table>
+   <tr><th></th><th>습식(Wet)</th><th>건식(Dry, 플라즈마)</th></tr>
+   <tr><td>방법</td><td>화학용액에 담가 녹임</td><td>가스를 플라즈마로 만들어 때림</td></tr>
+   <tr><td>방향성</td><td><b>등방성</b>(옆으로도 파임)</td><td><b class="hi">이방성</b>(아래로만 파임)</td></tr>
+   <tr><td>미세가공</td><td>불리</td><td><b>유리 — 현재 주류</b></td></tr>
+   <tr><td>설비</td><td>웨트 벤치, 케미컬 배관</td><td>RF 전원, 진공챔버, MFC, 스크러버</td></tr>
+  </table>`,
+  tip:'건식 식각 장비 = <b>진공 + 가스 + RF(고주파)</b> 3종 세트. 보전에서 만지는 게 정확히 이 세 가지입니다(펌프·MFC·매칭박스).'},
+ {h:'④ 증착과 이온주입 — 쌓고, 심는다',lead:'막을 올리는 일 / 성질을 바꾸는 일',
+  body:`<b class="hi">증착(Deposition)</b> = 웨이퍼 위에 얇은 막을 올리는 것
+  <ul>
+   <li><b>CVD</b>(화학기상증착): 가스를 반응시켜 막을 만듦. 저압이면 LPCVD, 플라즈마 쓰면 PECVD</li>
+   <li><b>PVD</b>(물리기상증착): <b>스퍼터링</b> — 아르곤 이온으로 금속 타깃을 때려 튀어나온 입자를 붙임</li>
+   <li><b>ALD</b>: 원자층 한 겹씩. 아주 얇고 균일, 대신 느림</li>
+  </ul>
+  <b class="hi">이온주입(Ion Implantation)</b> = 불순물(도펀트)을 이온으로 가속해 실리콘에 박아 넣어 전기적 성질을 바꿈
+  <ul>
+   <li><b>N형</b>: 인(P), 비소(As) — 전자가 남음 &nbsp;/&nbsp; <b>P형</b>: 붕소(B) — 정공이 생김</li>
+   <li>박아 넣으면 결정이 깨지므로 <b>어닐링(열처리)</b>으로 회복시킴</li>
+  </ul>`,
+  tip:'막을 쌓다 보면 표면이 울퉁불퉁해집니다. 이때 갈아서 평평하게 만드는 공정이 <b class="hi">CMP</b>(화학적 기계적 연마). 슬러리와 패드를 쓰고, 패드 교체·컨디셔닝이 대표적 보전 작업입니다.'},
+ {h:'⑤ 금속배선 → EDS → 패키징',lead:'연결하고, 검사하고, 포장한다',
+  body:`<ul>
+   <li><b>금속배선</b>: 만들어 놓은 소자들을 전선으로 잇기. 예전엔 <b>알루미늄</b>, 지금은 저항이 낮은 <b class="hi">구리</b>(다마신 공정)</li>
+   <li><b>EDS</b>: 웨이퍼 상태에서 칩마다 전기 검사. <b>프로브 카드</b>의 바늘을 패드에 대고 측정 → 불량은 잉킹/리페어</li>
+   <li><b>패키징 순서</b>: 백그라인딩 → 다이싱(절단) → 다이 본딩 → <b>와이어 본딩</b> → 몰딩 → 마킹 → 솔더볼 → <b>최종 테스트</b></li>
+  </ul>`,
+  tip:'검사가 두 번 나오는 게 헷갈립니다. <b>EDS = 자르기 전(웨이퍼 상태)</b>, <b>파이널 테스트 = 포장 끝난 완제품</b>. "EDS는 웨이퍼, FT는 제품"으로 구분하세요.'},
+]},
+
+{id:'c3',icon:'🧪',title:'장비 요소기술 — 진공·가스·온도',
+ sub:'보전 기술자가 실제로 만지는 부분',cards:[
+ {h:'왜 진공에서 하나?',lead:'공기가 있으면 다 망가진다',
+  body:`챔버 안에 공기가 남아 있으면 ① 산소·수분이 막을 오염시키고 ② 플라즈마가 제대로 안 서고 ③ 이온이 공기 분자와 부딪혀 웨이퍼까지 못 갑니다.
+  그래서 반도체 장비 대부분이 <b class="hi">진공 챔버</b>를 씁니다.
+  <ul>
+   <li>기준: <b>1기압 = 760 Torr = 101.3 kPa</b> (1 Torr ≈ 133 Pa)</li>
+   <li>저진공(러핑) → 중진공 → <b>고진공</b> → 초고진공 순으로 낮아짐</li>
+   <li>진공도가 <b>높다 = 압력이 낮다</b> (숫자가 작아진다)</li>
+  </ul>`,
+  tip:'말이 거꾸로라 제일 많이 틀립니다. <b>"진공도가 높다" = 압력이 낮다 = 더 텅 비었다.</b>'},
+ {h:'진공 펌프 4형제',lead:'혼자서는 대기압에서 고진공까지 못 간다',
+  body:`<table>
+   <tr><th>펌프</th><th>담당 구간</th><th>특징</th></tr>
+   <tr><td>로터리(회전날개)</td><td>대기압 → 저·중진공</td><td>오일식, 초벌(러핑)용. 오일 오염 주의</td></tr>
+   <tr><td><b>드라이 펌프</b></td><td>대기압 → 중진공</td><td>오일 없음. 현재 팹 표준 <b>백킹 펌프</b></td></tr>
+   <tr><td><b>터보분자(TMP)</b></td><td>중진공 → 고진공</td><td>날개가 초고속 회전. <b>대기압에서 못 돌림</b> → 앞에 백킹펌프 필수</td></tr>
+   <tr><td>크라이오(냉각)</td><td>고·초고진공</td><td>가스를 얼려 붙잡음. 주기적으로 <b>재생(regeneration)</b> 필요</td></tr>
+  </table>`,
+  tip:'현장 순서: <b>드라이(또는 로터리)로 러핑 → 어느 정도 내려가면 TMP 가동</b>. 순서를 어기고 TMP를 대기압에서 돌리면 파손됩니다 — 그래서 <b>인터록</b>이 걸려 있습니다.'},
+ {h:'진공 게이지 — 구간마다 다른 자',lead:'하나로 전 구간을 못 잰다',
+  body:`<ul>
+   <li><b>피라니(Pirani)</b> 게이지 — 열전도로 측정. <b>저·중진공</b>용. 싸고 튼튼</li>
+   <li><b>이온(BA) 게이지</b> — 기체를 이온화해 측정. <b class="hi">고진공</b>용. 저진공에서 켜면 필라멘트가 탐</li>
+   <li><b>캐패시턴스 마노미터(CDG/바라트론)</b> — 격막이 휘는 정도로 측정. <b>기체 종류에 상관없이 정확</b> → 공정 압력 제어용</li>
+  </ul>
+  <b>누설(leak) 점검</b>: 진공이 안 잡히면 O-링 손상, 배관 이완, 밸브 불량 순으로 봅니다. 헬륨 리크 디텍터로 찾습니다.`,
+  tip:'피라니·이온게이지는 <b>기체 종류에 따라 값이 달라집니다</b>(가스 보정계수). 정확한 공정 압력이 필요하면 <b>캐패시턴스 마노미터</b>를 쓰는 이유가 이것입니다.'},
+ {h:'가스와 케미컬 — 가장 위험한 부분',lead:'MFC, 가스박스, 스크러버',
+  body:`<ul>
+   <li><b class="hi">MFC</b>(Mass Flow Controller, 질량유량제어기) — 공정가스를 정해진 양만 흘려보냄. 단위 <b>sccm / slm</b></li>
+   <li><b>가스 박스 / 가스 캐비닛</b> — 실린더와 밸브를 모아둔 통. 항상 <b>배기(음압)</b>되고 <b>가스 감지기</b>가 붙어 있음</li>
+   <li><b>스크러버(Scrubber)</b> — 배기가스를 태우거나 물에 씻어 <b>정화한 뒤</b> 밖으로 내보냄</li>
+  </ul>
+  <table>
+   <tr><th>가스</th><th>성질</th><th>쓰임</th></tr>
+   <tr><td>SiH₄ (실란)</td><td><b>자연발화성</b> — 공기에 닿으면 붙음</td><td>실리콘계 증착</td></tr>
+   <tr><td>NF₃ / CF₄</td><td>식각·부식성</td><td>식각, <b>챔버 클리닝</b></td></tr>
+   <tr><td>NH₃, Cl₂, HF</td><td>독성·부식성</td><td>증착, 식각, 세정</td></tr>
+   <tr><td>Ar, N₂</td><td><b>불활성</b> (단, 질식 위험)</td><td>퍼지, 스퍼터링</td></tr>
+  </table>`,
+  tip:'불활성 가스라고 안전한 게 아닙니다. <b>N₂·Ar이 새면 산소가 밀려나 질식</b>합니다. 밀폐공간 작업 전 <b>산소농도 측정(18% 이상)</b>이 원칙입니다.'},
+ {h:'온도·전원·이송',lead:'나머지 요소들 한 번에',
+  body:`<ul>
+   <li><b>칠러(Chiller)</b> — 챔버·척을 정해진 온도로 유지. 냉각수(PCW) 라인 막힘·누수가 잦은 고장</li>
+   <li><b>히터/열전대(TC)</b> — 온도 측정·제어. PID 제어로 목표값 유지</li>
+   <li><b>RF 발생기 + 매칭 박스</b> — 플라즈마를 만들고 반사파를 최소화. <b>반사파(Reflected Power)가 높으면 이상 신호</b></li>
+   <li><b>정전척(ESC)</b> — 전기 힘으로 웨이퍼를 잡아둠. 잔류 전하로 웨이퍼가 안 떨어지는 사고 주의</li>
+   <li><b>로봇/로드락</b> — 진공을 깨지 않고 웨이퍼를 넣고 뺌. <b>FOUP</b>(웨이퍼 운반 통)를 로드포트에 올림</li>
+  </ul>`,
+  tip:'"압력이 안 내려간다 / 파티클이 늘었다 / RF 반사파가 튄다" — 이 세 가지가 시험과 현장에서 제일 자주 나오는 <b>증상</b>입니다. 게임 「설비 이상 진단실」에서 연습하세요.'},
+]},
+
+{id:'c4',icon:'🛠️',title:'설비보전 이론',sub:'시험 배점이 가장 큰 핵심 단원',cards:[
+ {h:'보전의 4가지 이름',lead:'언제 손대느냐로 갈린다',
+  body:`<table>
+   <tr><th>이름</th><th>언제</th><th>한마디</th></tr>
+   <tr><td><b class="hi">사후보전 BM</b><br>(Breakdown)</td><td>고장 <b>난 뒤</b></td><td>망가지면 고친다. 가장 원시적</td></tr>
+   <tr><td><b class="hi">예방보전 PM</b><br>(Preventive)</td><td>고장 <b>나기 전</b></td><td>주기적으로 점검·교체</td></tr>
+   <tr><td><b class="hi">개량보전 CM</b><br>(Corrective)</td><td>고장 원인 <b>자체를</b></td><td>설비를 <b>고쳐서 다시는</b> 그 고장이 안 나게</td></tr>
+   <tr><td><b class="hi">보전예방 MP</b><br>(Maintenance Prevention)</td><td><b>설계·구매 단계</b></td><td>애초에 고장 안 나는 설비를 들여옴</td></tr>
+  </table>
+  예방보전은 다시 둘로 나뉩니다.
+  <ul>
+   <li><b>TBM</b>(시간기준): "3개월마다 교체" — 달력대로</li>
+   <li><b>CBM</b>(상태기준) = <b class="hi">예지보전(PdM)</b>: 진동·온도·전류를 보다가 <b>나빠지면</b> 교체</li>
+  </ul>`,
+  tip:'제일 많이 틀리는 곳: <b>CM(개량보전)과 MP(보전예방)</b>. <b>이미 있는 설비를 개선</b>하면 CM, <b>아직 없는 설비를 설계할 때</b> 반영하면 MP입니다.'},
+ {h:'TPM — 전원이 참여하는 보전',lead:'Total Productive Maintenance',
+  body:`"보전은 보전팀만의 일"이 아니라 <b>운전자도 자기 설비를 돌본다</b>는 사고방식입니다.
+  <ul>
+   <li>목표: <b>무재해 · 무불량 · 무고장</b></li>
+   <li><b class="hi">자주보전</b>(운전자가 직접 청소·급유·점검)이 TPM의 상징</li>
+   <li>기본 3원칙: <b>청소 · 급유 · 조임(체결)</b> — 고장의 상당수가 이 셋을 안 해서 생김</li>
+   <li><b>5S</b>: 정리 · 정돈 · 청소 · 청결 · 습관화</li>
+   <li>청소는 단순 미화가 아니라 <b>점검</b>입니다("청소는 곧 점검"). 닦다 보면 누유·균열·풀림이 보임</li>
+  </ul>`,
+  tip:'<b>"청소·급유·조임"</b> 3개는 그대로 나오는 단골 문항입니다.'},
+ {h:'설비의 6대 로스',lead:'설비 시간을 갉아먹는 여섯 도둑',
+  body:`<ul>
+   <li>① <b>고장</b> 로스 — 갑자기 멈춤</li>
+   <li>② <b>준비·조정(段取)</b> 로스 — 품종 바꾸느라 세팅</li>
+   <li>③ <b>공전·순간정지</b> 로스 — 잠깐잠깐 멈췄다 다시 감(잼, 센서 오검출)</li>
+   <li>④ <b>속도저하</b> 로스 — 설계 속도보다 느리게 돌림</li>
+   <li>⑤ <b>불량·수정</b> 로스 — 불량품 만들고 다시 손봄</li>
+   <li>⑥ <b>초기수율(기동)</b> 로스 — 켜고 안정될 때까지 나오는 손실</li>
+  </ul>
+  이 여섯이 각각 아래 지표로 이어집니다:
+  <b>①② → 시간가동률</b>, <b>③④ → 성능가동률</b>, <b>⑤⑥ → 양품률</b>`,
+  tip:'6대 로스를 셋씩 묶어 <b>시간 / 성능 / 품질</b>로 대응시키는 문제가 자주 나옵니다. 위 마지막 줄을 그대로 외우세요.'},
+ {h:'보전 지표 계산 — 이건 반드시 손으로',lead:'MTBF · MTTR · 가용도 · OEE',
+  body:`<ul>
+   <li><b class="hi">MTBF</b> (평균고장간격) = 총 가동시간 ÷ 고장 횟수 &nbsp;→ <b>길수록 좋다(신뢰성)</b></li>
+   <li><b class="hi">MTTR</b> (평균수리시간) = 총 수리시간 ÷ 고장 횟수 &nbsp;→ <b>짧을수록 좋다(보전성)</b></li>
+   <li><b class="hi">가용도(Availability)</b> = MTBF ÷ (MTBF + MTTR) × 100%</li>
+  </ul>
+  <b class="hi">설비종합효율(OEE)</b> = <b>시간가동률 × 성능가동률 × 양품률</b>
+  <ul>
+   <li>시간가동률 = 가동시간 ÷ 부하시간</li>
+   <li>성능가동률 = (이론 사이클타임 × 생산량) ÷ 가동시간</li>
+   <li>양품률 = 양품수 ÷ 총생산량</li>
+  </ul>
+  <div class="tipbox" style="margin-top:10px"><b>예제</b> 부하 480분 중 정지 80분 → 가동 400분. 400분에 200개 생산(이론 CT 1.6분/개), 그중 190개 양품.<br>
+  시간가동률 400/480 = 83.3% · 성능 (1.6×200)/400 = 80% · 양품 190/200 = 95%<br>
+  <b>OEE = 0.833 × 0.8 × 0.95 ≈ 63.3%</b></div>`,
+  tip:'세 개를 <b>곱한다</b>는 걸 잊고 더하거나 평균 내는 실수가 많습니다. 그리고 <b>MTBF는 길수록, MTTR은 짧을수록</b> 좋습니다 — 방향을 반대로 답하지 마세요.'},
+ {h:'고장의 일생 — 욕조 곡선',lead:'초기 · 우발 · 마모',
+  body:`시간에 따른 고장률을 그리면 욕조(bathtub) 모양이 됩니다.
+  <ul>
+   <li><b>초기고장기</b> — 고장률이 <b>감소</b>. 설치·조립 불량, 초기 결함 → 대책은 <b>디버깅·초기 유동관리</b></li>
+   <li><b>우발고장기</b> — 고장률이 <b>일정</b>. 예측 못 하는 우연한 고장 → 대책은 <b>사후보전·예비품 확보</b></li>
+   <li><b>마모고장기</b> — 고장률이 <b>증가</b>. 부품 수명이 다함 → 대책은 <b>예방보전(주기 교체)</b></li>
+  </ul>`,
+  tip:'"고장률이 일정한 구간은?" → <b>우발고장기</b>. "예방보전이 가장 효과적인 구간은?" → <b>마모고장기</b>. 이 두 문장이 그대로 출제됩니다.'},
+]},
+
+{id:'c5',icon:'🔧',title:'자동화 기초와 공유압',sub:'장비를 움직이는 힘과 신호',cards:[
+ {h:'공압 vs 유압',lead:'왜 반도체 장비는 공압이 많은가',
+  body:`<table>
+   <tr><th></th><th>공압(공기)</th><th>유압(기름)</th></tr>
+   <tr><td>힘</td><td>작다</td><td><b>매우 크다</b></td></tr>
+   <tr><td>속도</td><td><b>빠르다</b></td><td>느리지만 정밀</td></tr>
+   <tr><td>깨끗함</td><td><b>새도 오염 없음</b></td><td>기름 누유 = 오염</td></tr>
+   <tr><td>정밀 정지</td><td>어렵다(압축됨)</td><td>쉽다</td></tr>
+  </table>
+  반도체 장비는 <b class="hi">청정도</b>가 최우선이라 대부분 <b>공압</b>(밸브·척·게이트도어)과 <b>전동(서보/스테핑 모터)</b>을 씁니다.
+  <br><br><b>파스칼의 원리</b>: 밀폐된 유체에 가한 압력은 모든 방향에 같게 전달됩니다. → <b class="hi">F = P × A</b> (힘 = 압력 × 단면적)`,
+  tip:'계산 단골: 실린더 지름 50mm(단면적 약 19.6cm²)에 0.5MPa(=5kgf/cm²)를 걸면 <b>약 98kgf</b>. 단면적이 커질수록 힘이 커집니다.'},
+ {h:'공압 회로의 기본 부품',lead:'만들고 → 다듬고 → 보내고 → 움직인다',
+  body:`<ul>
+   <li><b>컴프레서(압축기)</b> → 압축공기 생성 → <b>애프터쿨러·에어드라이어</b>로 물기 제거 → 탱크</li>
+   <li><b class="hi">공압 3점 세트</b> = <b>필터 + 레귤레이터(압력조절) + 루브리케이터(급유)</b> ※ 청정 라인은 급유기 없이 2점 세트</li>
+   <li><b>방향제어밸브</b> — 공기가 갈 길을 정함. 표기 <b>5포트 2위치(5/2)</b> = 포트 5개, 위치 2개 → 복동 실린더용</li>
+   <li><b>유량제어밸브</b> — 속도 조절. <b>미터-인</b>(들어가는 쪽 조임) / <b class="hi">미터-아웃</b>(나가는 쪽 조임, 공압에서 주로 사용 — 움직임이 안정적)</li>
+   <li><b>체크밸브</b> — 한 방향으로만 / <b>릴리프밸브</b> — 정해진 압력 넘으면 빼줌(안전)</li>
+   <li><b>실린더</b> — <b>단동</b>(한쪽만 공압, 복귀는 스프링) / <b>복동</b>(양쪽 공압, 힘이 양방향)</li>
+  </ul>`,
+  tip:'공압 실린더 속도 제어는 <b>미터-아웃</b>이 기본입니다. 공기는 압축되기 때문에 미터-인으로 하면 <b>덜컹거리며(스틱슬립) 튀어나갑니다</b>.'},
+ {h:'센서 — 장비의 눈',lead:'무엇을 감지하느냐로 고른다',
+  body:`<ul>
+   <li><b>유도형 근접센서</b> — <b>금속만</b> 감지 (자기장 변화)</li>
+   <li><b>정전용량형 근접센서</b> — 금속·<b>비금속·액체</b>까지 감지 (정전용량 변화)</li>
+   <li><b>광전센서</b> — 빛. 투과형(가장 멀리·정확) / 반사형 / 회귀반사형. <b>투명 웨이퍼·유리 감지에 주의</b></li>
+   <li><b>리드 스위치(오토스위치)</b> — 실린더 로드 위치 확인용. 자석에 반응</li>
+   <li><b>로드셀</b>(힘), <b>엔코더</b>(회전각/위치), <b>열전대·측온저항체</b>(온도)</li>
+  </ul>
+  출력 방식 <b>NPN(싱크) / PNP(소스)</b> 구분: PLC 입력 방식과 맞춰야 동작합니다.`,
+  tip:'"웨이퍼가 있는지 없는지" 확인은 보통 <b>광전센서(투과형) 또는 정전용량형</b>. 실리콘은 금속이 아니므로 <b>유도형은 부적합</b>합니다.'},
+ {h:'시퀀스와 PLC',lead:'순서대로 시키는 장치',
+  body:`<b>시퀀스 제어</b> = 정해진 <b>순서대로</b> 단계를 진행하는 제어(← 되먹임하는 피드백 제어와 대비).
+  <ul>
+   <li><b class="hi">a접점</b>(NO) = 평소 열림, 누르면 붙음 &nbsp;/&nbsp; <b class="hi">b접점</b>(NC) = 평소 붙음, 누르면 떨어짐</li>
+   <li><b>자기유지 회로</b> — 누름버튼에서 손을 떼도 계속 동작 (자기 접점으로 자신을 물고 있음)</li>
+   <li><b>인터록</b> — 동시에 동작하면 안 되는 것을 서로 막음 (전·후진 동시 출력 금지, 도어 열리면 RF 차단 등)</li>
+   <li><b>PLC 구성</b>: 입력부 → CPU(연산) → 출력부, + 전원부. 프로그램은 <b>래더 다이어그램</b>이 대표</li>
+   <li>PLC는 <b>스캔</b>(입력 읽기 → 연산 → 출력 갱신)을 반복합니다</li>
+   <li><b>타이머(T)</b>: 정해진 시간 뒤 동작 / <b>카운터(C)</b>: 정해진 횟수 세면 동작</li>
+  </ul>`,
+  tip:'<b>비상정지(EMS)는 반드시 b접점</b>으로 만듭니다. 선이 끊어져도 정지 신호가 걸리도록 — 이것을 <b>페일세이프(Fail-Safe)</b>라고 합니다.'},
+]},
+
+{id:'c6',icon:'🦺',title:'안전관리',sub:'점수도 주고 목숨도 지킨다',cards:[
+ {h:'LOTO — 정비 전 제1원칙',lead:'잠그고, 표시하고, 확인한다',
+  body:`설비를 정비할 때 누군가 모르고 전원을 켜면 사망사고가 납니다. 그래서:
+  <ul>
+   <li><b class="hi">Lock Out</b> — 차단기·밸브를 <b>물리적으로 잠금</b></li>
+   <li><b class="hi">Tag Out</b> — "작업 중" <b>표지를 부착</b>(작업자 이름·연락처)</li>
+   <li>잔류 에너지 방출 — 축전기 방전, 잔압 배출, 스프링 해방, 낙하 방지</li>
+   <li><b>열쇠는 작업 당사자가 보관</b>하고, 작업이 끝나면 <b>본인이</b> 해제</li>
+   <li>재가동 전 사람·공구가 빠졌는지 확인 후 알리고 가동</li>
+  </ul>
+  차단해야 할 에너지: <b>전기 · 공압/유압 · 가스 · 화학물질 · 열 · 위치(중력) · 스프링</b>`,
+  tip:'제일 많이 나오는 문장: <b>"자물쇠 열쇠는 작업자 본인이 관리하고, 해제도 본인이 한다."</b> 남이 대신 풀어주면 안 됩니다.'},
+ {h:'화학물질과 가스',lead:'MSDS · GHS · 스크러버',
+  body:`<ul>
+   <li><b class="hi">MSDS</b>(물질안전보건자료) — 물질의 위험성·응급조치·보호구가 적힌 문서. <b>취급 장소에 비치·게시</b></li>
+   <li><b class="hi">GHS</b> — 세계 공통 그림문자(폭발성·인화성·산화성·고압가스·부식성·급성독성·건강유해성·환경유해성)</li>
+   <li><b>HF(불산)</b> — 반도체 세정에 쓰이는 대표 위험물. 피부에 닿으면 <b>당장은 안 아프다가</b> 뼈까지 침투. 즉시 다량의 물로 세척 후 <b>글루콘산칼슘</b> 처치·병원</li>
+   <li>가스 실린더는 <b>세워서 체인·밴드로 고정</b>, 밸브 보호캡 씌워 운반, 가연성과 조연성(산소)은 <b>분리 보관</b></li>
+   <li>가스 누출 경보가 울리면 <b>바람 위(풍상) 쪽으로 대피</b>하고 임의 접근 금지</li>
+  </ul>`,
+  tip:'보호구 정답 고르기: 화학물질 취급 = <b>내화학 장갑 + 보안면(고글) + 앞치마</b>, 유해가스 = <b>방독마스크(정화통 색 구분)</b>, 산소 부족 우려 = <b>송기마스크/공기호흡기</b>(방독마스크는 산소를 만들어주지 못합니다).'},
+ {h:'정전기(ESD)와 전기 안전',lead:'보이지 않게 칩을 죽인다',
+  body:`<ul>
+   <li>사람 몸에 쌓인 정전기 수 kV가 <b>반도체 소자를 순식간에 파괴</b>합니다(ESD).</li>
+   <li>대책: <b class="hi">접지 손목띠(리스트 스트랩)</b>, 제전복·제전화, <b>이온라이저(제전기)</b>, 도전성 매트, <b>습도 유지</b></li>
+   <li>손목띠는 <b>맨살에 밀착</b>되어야 하고 주기적으로 <b>저항 점검</b>을 합니다.</li>
+   <li>전기 작업: 검전 → 방전 → 접지 순서. 활선 작업은 원칙적으로 금지, 절연장갑·절연공구 사용</li>
+   <li>감전 재해자 발견 시 <b>전원 차단이 먼저</b>. 맨손으로 잡아당기면 같이 감전됩니다</li>
+  </ul>`,
+  tip:'클린룸에서 <b>습도를 45% 정도로 유지</b>하는 이유가 파티클뿐 아니라 <b>정전기 억제</b> 때문이라는 점, 연결해서 기억하세요.'},
+ {h:'그 밖에 꼭 나오는 것들',lead:'회전체 · 중량물 · 밀폐공간',
+  body:`<ul>
+   <li><b>회전체·구동부</b>: 방호덮개 필수, 장갑 낀 손을 넣지 않기(말려 들어감), 회전 중 청소·급유 금지</li>
+   <li><b>중량물</b>: 허리가 아니라 <b>다리 힘</b>으로, 몸에 붙여서, 무거우면 <b>2인 이상 또는 장비</b> 사용</li>
+   <li><b>밀폐공간</b>(챔버 내부, 피트): 들어가기 전 <b>산소농도 18% 이상</b> 확인, 감시인 배치, 환기</li>
+   <li><b>소화기</b>: A급(일반) · B급(유류) · C급(전기) · D급(금속). 전기설비 화재에는 <b>물 금지</b>, CO₂·분말</li>
+   <li><b>3정 5S</b>와 정리정돈: 통로 확보, 공구 제자리 — 넘어짐·부딪힘 사고의 대부분이 여기서 납니다</li>
+  </ul>`,
+  tip:'"고장 난 설비를 급하게 고치려고 <b>인터록을 임의로 해제</b>했다" — 시험에서도 현장에서도 <b>무조건 오답</b>입니다.'},
+]},
+
+{id:'c7',icon:'🔩',title:'기계요소와 정비 기초',sub:'실제로 손에 공구를 쥐는 부분',cards:[
+ {h:'조임 — 정비의 8할은 볼트다',lead:'세게 조이면 좋은 게 아니다',
+  body:`<ul>
+   <li>볼트는 <b class="hi">규정 토크</b>로 조입니다. 세게 조이면 <b>늘어나 끊어지고</b>, 약하면 풀립니다. 그래서 <b>토크렌치</b>를 씁니다.</li>
+   <li>여러 개를 조일 땐 <b class="hi">대각선 순서로 2~3회 나눠</b> 조입니다(플랜지·챔버 리드가 대표적). 한쪽부터 다 조이면 <b>기울어져 누설</b>이 납니다.</li>
+   <li>풀림 방지: <b>스프링와셔 · 이붙이와셔 · 더블너트 · 분할핀 · 나사고정제(록타이트)</b></li>
+   <li>나사 규격 <b>M10 × 1.5</b> = 바깥지름 10mm, 피치 1.5mm. 오른나사가 기본</li>
+  </ul>`,
+  tip:'진공 챔버 리드를 <b>한 볼트만 끝까지 조인 뒤</b> 옆으로 넘어가면 O-링이 한쪽만 눌려 <b>리크</b>가 납니다. "대각선으로, 나눠서"가 정답입니다.'},
+ {h:'베어링',lead:'회전하는 곳엔 반드시 있다',
+  body:`<ul>
+   <li><b>구름 베어링</b>(볼·롤러) — 마찰이 작고 교체가 쉬움. 대부분의 모터·펌프</li>
+   <li><b>미끄럼 베어링</b>(부시) — 하중을 넓게 받음, 충격에 강함</li>
+   <li>볼 베어링 = 고속·경하중 / 롤러 베어링 = 저속·<b>중하중</b></li>
+   <li>호칭번호 뒤 두 자리 × 5 = <b class="hi">안지름</b>. 예) <b>6208 → 8×5 = 40mm</b> (00·01·02·03은 10·12·15·17mm 예외)</li>
+   <li>끼울 땐 <b>끼우는 쪽 링만</b> 때립니다(내륜을 끼우면서 외륜을 두드리면 궤도가 상함). 열박음은 100℃ 정도</li>
+  </ul>
+  고장 징후: <b>이상음(고르지 않은 소리) · 발열 · 진동 증가 · 그리스 변색</b>`,
+  tip:'"6208의 안지름은?" → <b>40mm</b>. 이 계산은 거의 매번 나옵니다.'},
+ {h:'윤활',lead:'기름을 왜 넣는지부터',
+  body:`윤활의 목적 다섯 가지: <b class="hi">감마(마찰 감소) · 냉각 · 밀봉 · 방청 · 청정(이물 배출)</b>
+  <table>
+   <tr><th></th><th>그리스</th><th>윤활유(오일)</th></tr>
+   <tr><td>형태</td><td>반고체(오일+증주제)</td><td>액체</td></tr>
+   <tr><td>장점</td><td>새지 않음, 밀봉·급유 간격 김</td><td><b>냉각 효과 큼</b>, 순환 가능</td></tr>
+   <tr><td>쓰는 곳</td><td>저·중속, 밀폐 곤란한 곳</td><td>고속·고온, 기어박스</td></tr>
+  </table>
+  급유 방식: 손급유 · 적하 · 패드 · 비말(splash) · 강제순환 · 그리스니플(그리스건)
+  <br><b>점도</b>가 너무 높으면 저항·발열, 너무 낮으면 유막이 끊깁니다.`,
+  tip:'<b>과급유(너무 많이 넣기)도 고장 원인</b>입니다. 그리스를 꽉 채우면 저어대느라 발열해 베어링이 탑니다. "적정량"이 답입니다.'},
+ {h:'동력 전달과 축 정렬',lead:'벨트 · 체인 · 기어 · 커플링',
+  body:`<ul>
+   <li><b>V벨트</b> — 마찰로 전달. 미끄럼이 있어 <b>과부하 시 슬립 = 안전장치 역할</b>. 장력 관리 필요</li>
+   <li><b>타이밍벨트 / 체인 / 기어</b> — 이가 물려 <b>미끄럼 없음</b>. 정확한 회전비가 필요할 때</li>
+   <li>회전비: <b>N₁ × D₁ = N₂ × D₂</b> (풀리 지름이 크면 느리게, 대신 토크가 큼)</li>
+   <li><b class="hi">축 정렬(얼라인먼트)</b> — 모터와 부하의 축이 어긋나면 진동·베어링 조기 파손. 평행 어긋남·각도 어긋남을 다이얼게이지나 레이저로 잡음</li>
+  </ul>`,
+  tip:'현장 감별법: 진동이 <b>회전주파수의 1배</b>에서 크면 <b>불평형(언밸런스)</b>, <b>2배</b>에서 크면 <b>축 정렬 불량</b>일 가능성이 큽니다.'},
+ {h:'실(Seal) — 반도체에서 특히 중요',lead:'O-링 하나가 라인을 세운다',
+  body:`<ul>
+   <li><b class="hi">O-링</b> — 홈에 넣고 눌러 막음. 진공 챔버·배관의 기본. 재질은 <b>바이톤(불소고무)·칼레즈</b> 등 내열·내약품</li>
+   <li><b>가스켓</b> — 평면 사이에 끼우는 판. <b>오일씰</b> — 회전축의 기름 누출 방지. <b>메커니컬 씰</b> — 펌프 회전축의 정밀 밀봉</li>
+   <li>O-링 관리: 조립 전 <b>이물·흠집 확인</b>, 규정 그리스 소량, <b>재사용 금지</b>가 원칙, 압축영구변형(굳음)이 오면 교체</li>
+   <li>진공 규격 부품: <b>KF(NW) · ISO · CF</b> 플랜지 — 클램프와 센터링 링으로 체결</li>
+  </ul>`,
+  tip:'"챔버 진공이 안 잡힌다"의 <b>1순위 용의자가 O-링</b>입니다. 눌린 자국·머리카락 한 올·미세한 흠집이면 끝입니다.'},
+]},
+
+{id:'c8',icon:'⚡',title:'전기·전자 기초',sub:'계산 문제가 나오는 곳',cards:[
+ {h:'옴의 법칙과 전력',lead:'세 글자만 외우면 된다',
+  body:`<b class="hi">V = I × R</b> (전압 = 전류 × 저항), <b class="hi">P = V × I = I²R</b> (전력)
+  <ul>
+   <li>단위: V(볼트) · A(암페어) · Ω(옴) · W(와트)</li>
+   <li><b>직렬</b> 합성저항 = R₁ + R₂ + … (전류가 같다)</li>
+   <li><b>병렬</b> 합성저항 = 1 ÷ (1/R₁ + 1/R₂) (전압이 같다) — 같은 값 2개면 <b>절반</b></li>
+   <li>키르히호프: 한 점에 들어온 전류의 합 = 나간 전류의 합</li>
+  </ul>
+  <div class="tipbox" style="margin-top:10px"><b>예제</b> 24V에 12Ω → I = 24/12 = <b>2A</b>, P = 24×2 = <b>48W</b>.<br>
+  10Ω과 10Ω 병렬 → <b>5Ω</b>. 10Ω과 10Ω 직렬 → <b>20Ω</b>.</div>`,
+  tip:'병렬 합성저항은 <b>항상 가장 작은 저항보다 작아집니다.</b> 계산 결과가 그보다 크면 틀린 겁니다.'},
+ {h:'직류·교류와 3상 모터',lead:'장비를 돌리는 전기',
+  body:`<ul>
+   <li><b>직류(DC)</b> — 센서·PLC 제어전원(보통 DC 24V). <b>교류(AC)</b> — 모터·히터 등 동력</li>
+   <li>주파수 60Hz(국내). 교류의 크기는 보통 <b>실효값</b>으로 말합니다</li>
+   <li><b>3상 유도전동기</b> — 산업용 표준. <b>세 상 중 두 선을 바꾸면 역회전</b>합니다</li>
+   <li>결선: <b>Y(스타)</b>는 기동 시 전류를 낮추고, <b>Δ(델타)</b>는 정상 운전. 그래서 <b>Y-Δ 기동</b>을 씁니다</li>
+   <li><b>인버터(VFD)</b> — 주파수를 바꿔 회전수를 조절. 팬·펌프에서 <b>에너지 절감</b> 효과 큼</li>
+   <li>회전수 N ≈ 120f / P (f=주파수, P=극수)</li>
+  </ul>`,
+  tip:'"모터를 반대로 돌리려면?" → <b>3상 중 임의의 두 선을 서로 바꾼다</b>. 단골입니다.'},
+ {h:'반도체 소자',lead:'반도체 자격증인데 소자를 모르면 곤란',
+  body:`<ul>
+   <li><b>진성 반도체</b> = 순수한 실리콘. 여기에 불순물을 넣은 것이 <b>외인성(N형·P형)</b></li>
+   <li><b class="hi">PN 접합 = 다이오드</b> — 한 방향으로만 전류를 흘림 → <b>정류</b>. 순방향에서 실리콘은 약 0.7V 강하</li>
+   <li><b>트랜지스터</b> — 작은 신호로 큰 전류를 조절(증폭·스위칭). <b>MOSFET</b>은 전압으로 켜고 끄는 스위치로 반도체 집적회로의 기본 소자</li>
+   <li><b>사이리스터(SCR)·TRIAC</b> — 전력 제어(히터 위상 제어 등)</li>
+   <li><b>제너 다이오드</b> — 정전압, <b>포토커플러</b> — 전기적으로 분리한 채 신호 전달(노이즈 차단)</li>
+  </ul>`,
+  tip:'혼동 주의: <b>N형은 전자, P형은 정공</b>이 다수 캐리어입니다. 도핑 원소는 앞 단원(이온주입)과 같이 묶어 외우세요.'},
+ {h:'전기 점검 계측기',lead:'무엇으로 무엇을 재나',
+  body:`<table>
+   <tr><th>계측기</th><th>측정 대상</th><th>주의</th></tr>
+   <tr><td><b>멀티미터(테스터)</b></td><td>전압·전류·저항·도통</td><td>저항은 <b>전원을 끄고</b> 측정</td></tr>
+   <tr><td><b>클램프미터</b></td><td>전류(선을 물려서)</td><td>선을 끊지 않고 측정 가능</td></tr>
+   <tr><td><b class="hi">절연저항계(메거)</b></td><td>절연 상태(MΩ)</td><td>모터·케이블 절연 열화 판정</td></tr>
+   <tr><td><b>접지저항계</b></td><td>접지 저항(Ω)</td><td>낮을수록 좋음</td></tr>
+   <tr><td><b>오실로스코프</b></td><td>파형(시간에 따른 변화)</td><td>센서 신호·노이즈 확인</td></tr>
+  </table>
+  <b>접지</b>는 감전 방지 + 노이즈 대책입니다. 반도체 장비는 <b>접지가 나쁘면 플라즈마·계측이 흔들립니다.</b>`,
+  tip:'절연저항이 <b>기준 이하로 떨어지면</b> 습기·권선 열화 신호입니다. 측정 전 반드시 <b>전원 차단 + 잔류전하 방전</b>을 하세요.'},
+]},
+
+{id:'c9',icon:'📏',title:'측정 · 진단 · 고장분석',sub:'재고, 찾고, 다시 안 나게 한다',cards:[
+ {h:'길이 측정 3종',lead:'어디까지 읽을 수 있나',
+  body:`<table>
+   <tr><th>공구</th><th>읽는 단위</th><th>쓰임</th></tr>
+   <tr><td>강철자</td><td>0.5mm</td><td>대충 재기</td></tr>
+   <tr><td><b>버니어 캘리퍼스</b></td><td><b>0.05 / 0.02mm</b></td><td>바깥·안지름·깊이·단차</td></tr>
+   <tr><td><b>마이크로미터</b></td><td><b>0.01mm</b> (아들자 0.001)</td><td>정밀 바깥지름·두께</td></tr>
+   <tr><td><b>다이얼 게이지</b></td><td>0.01mm</td><td>흔들림(런아웃)·축 정렬</td></tr>
+   <tr><td>틈새(간극) 게이지</td><td>0.01mm 단위 박판</td><td>틈 재기</td></tr>
+  </table>`,
+  tip:'측정의 기본: <b>측정면을 닦고 · 온도 안정 후 · 시선을 수직으로</b>. 마이크로미터는 <b>래칫(딸깍)</b>까지만 돌려 힘을 일정하게 줍니다.'},
+ {h:'상태 감시 — 예지보전의 눈',lead:'무엇을 보고 미리 아는가',
+  body:`<ul>
+   <li><b class="hi">진동</b> — 가장 대표적. 1× 성분 크면 <b>불평형</b>, 2× 성분 크면 <b>축 정렬 불량</b>, 고주파 성분이면 <b>베어링 결함</b></li>
+   <li><b>온도(열화상 카메라)</b> — 접점 발열, 베어링 발열, 배관 막힘을 비접촉으로 찾음</li>
+   <li><b>오일 분석</b> — 기름 속 <b>마모 금속가루</b>로 내부 마모 진행을 봄</li>
+   <li><b>초음파</b> — 사람이 못 듣는 고주파. <b>가스·진공 누설</b>과 전기 아크 탐지</li>
+   <li><b>전류 분석</b> — 모터 전류 파형으로 부하 이상·회전자 결함 추정</li>
+  </ul>
+  이 데이터를 모아 "기준을 넘으면 정비"하는 것이 <b>CBM(상태기준보전)</b>입니다.`,
+  tip:'앞 단원의 <b>보전 4종</b>과 이어집니다. 상태 감시 = <b>예지보전(PdM/CBM)</b>의 수단이지, 그 자체가 보전 종류는 아닙니다.'},
+ {h:'고장 원인을 찾는 방법',lead:'감이 아니라 절차로',
+  body:`<ul>
+   <li><b class="hi">5Why(왜왜 분석)</b> — "왜?"를 다섯 번 파고들어 <b>진짜 원인</b>까지 감. (벨트가 끊어졌다 → 왜? 장력 과다 → 왜? 조정 기준이 없다 → …)</li>
+   <li><b>특성요인도(어골도·피시본)</b> — 원인을 <b>4M</b>(Man 사람 · Machine 설비 · Material 재료 · Method 방법)으로 갈래 쳐 정리</li>
+   <li><b>파레토도</b> — 고장 건수를 큰 순서로. <b>상위 몇 개가 전체의 대부분</b>이라는 것을 보여줌 → 어디부터 손댈지 결정</li>
+   <li><b>FMEA</b> — 고장이 나기 전에 "이 부품이 고장 나면 무슨 일이 벌어지나"를 미리 따져 위험도가 큰 것부터 대비</li>
+   <li><b>설비 이력카드</b> — 언제 무엇을 왜 고쳤는지 기록. 기록이 없으면 MTBF도 못 구합니다</li>
+  </ul>`,
+  tip:'재발 방지의 결론은 늘 <b>개량보전(CM)</b>으로 갑니다. "다시 안 나게 설비를 바꿨다"까지 가야 끝난 겁니다.'},
+ {h:'신뢰도 계산',lead:'직렬은 곱하고, 병렬은 실패를 곱한다',
+  body:`<ul>
+   <li><b>신뢰도 R</b> = 정해진 시간 동안 고장 없이 버틸 확률 (0~1)</li>
+   <li><b class="hi">직렬</b>(하나만 고장 나도 전체 정지) → <b>R = R₁ × R₂ × …</b> → 부품이 많을수록 <b>급격히 나빠짐</b></li>
+   <li><b class="hi">병렬</b>(예비기 있음) → <b>R = 1 − (1−R₁)(1−R₂)</b> → 하나 살아 있으면 됨, 훨씬 좋아짐</li>
+   <li><b>고장률 λ = 1 ÷ MTBF</b> (단위: 회/시간)</li>
+  </ul>
+  <div class="tipbox" style="margin-top:10px"><b>예제</b> R=0.9 부품 3개 직렬 → 0.9³ = <b>0.729</b>.<br>
+  R=0.9 두 대를 병렬로 두면 → 1 − (0.1×0.1) = <b>0.99</b>. 예비기 한 대의 힘이 이만큼 큽니다.</div>`,
+  tip:'"부품 수가 늘면 신뢰도는?" → <b>직렬이므로 떨어진다</b>. 반대로 예비를 병렬로 두면 올라갑니다.'},
+]},
+
+{id:'c10',icon:'🏭',title:'팹 유틸리티와 장비 반입',sub:'장비 한 대를 세우는 전 과정',cards:[
+ {h:'장비에 들어가는 유틸리티',lead:'전기만 꽂는 게 아니다',
+  body:`<table>
+   <tr><th>약어</th><th>이름</th><th>쓰임</th></tr>
+   <tr><td><b class="hi">UPW</b></td><td>초순수</td><td>웨이퍼 세정. <b>비저항 18.2 MΩ·cm</b>가 기준</td></tr>
+   <tr><td><b>PCW</b></td><td>공정 냉각수</td><td>챔버·RF·펌프 냉각</td></tr>
+   <tr><td><b>CDA</b></td><td>청정건조공기</td><td>공압 밸브·에어 구동부</td></tr>
+   <tr><td><b>N₂</b></td><td>질소</td><td>퍼지, 대기 차단</td></tr>
+   <tr><td><b>하우스 배큠</b></td><td>공장 진공</td><td>웨이퍼 흡착(척), 보조 배기</td></tr>
+   <tr><td><b>전력 / UPS</b></td><td>동력·무정전</td><td>순간정전에도 제어부는 살아 있어야 함</td></tr>
+  </table>`,
+  tip:'유틸리티 하나만 빠져도 장비는 <b>인터록으로 정지</b>합니다. "장비가 안 켜진다"의 절반은 <b>유틸리티 미공급</b>입니다.'},
+ {h:'배기와 폐수',lead:'들어온 것은 반드시 나간다',
+  body:`배기(Exhaust)는 성질별로 <b>따로</b> 뽑습니다. 섞으면 반응해서 사고가 납니다.
+  <ul>
+   <li><b>일반 배기</b> — 열·수분</li>
+   <li><b>산·알칼리 배기</b> — 스크러버에서 <b>물로 씻어(습식)</b> 중화</li>
+   <li><b>독성·가연성 배기</b> — <b>연소식·흡착식</b>으로 처리 후 배출</li>
+   <li><b>VOC</b>(유기용제) — 별도 처리</li>
+  </ul>
+  <b>차압(배기 압력) 감시</b>가 중요합니다. 덕트가 막히거나 팬이 약해지면 <b>가스가 역류</b>할 수 있어 즉시 알람이 뜹니다.`,
+  tip:'"배기 차압 저하 알람" → 덕트 막힘·필터 포화·팬 이상 순으로 봅니다. <b>공정 진행을 멈추는 것이 먼저</b>입니다.'},
+ {h:'신규 장비 반입(Set-up) 순서',lead:'출제기준의 "공정 신규설비" 항목',
+  body:`<ol style="padding-left:20px;line-height:2">
+   <li><b>반입(Rigging)</b> — 무진동·클린 반입, 통로·바닥하중 확인</li>
+   <li><b>위치 잡기 · 레벨링</b> — 수평 조정, 앵커·내진 고정</li>
+   <li><b class="hi">유틸리티 후크업</b> — 전력·PCW·CDA·N₂·가스·배기 연결</li>
+   <li><b>점검</b> — <b>리크 체크(질소·헬륨) · 접지 · 절연저항</b></li>
+   <li><b>파워 온 · 초기 셋업</b> — 파라미터 입력, 인터록 시험, 로봇 티칭</li>
+   <li><b class="hi">검증(Qual)</b> — 파티클·막두께·균일도 등 규격 확인</li>
+   <li><b>양산 이관</b> + 문서화(도면·PM 체크시트·스페어 목록)</li>
+  </ol>
+  안전 인증 <b>SEMI S2</b>: 반도체 장비의 안전 설계 기준(인터록·비상정지·표시).`,
+  tip:'순서에서 자주 틀리는 곳: <b>유틸리티를 연결한 뒤 곧바로 켜지 않습니다.</b> 반드시 <b>리크·접지·절연 점검 → 파워 온</b> 순서입니다.'},
+ {h:'장비 운영과 예비품',lead:'매일 돌아가게 만드는 관리',
+  body:`<ul>
+   <li><b>PM 체크시트</b> — 일상(일간)·주간·월간·연간으로 나눠 점검 항목과 주기를 정해 둠</li>
+   <li><b class="hi">예비품(스페어) 관리</b> — 리드타임이 긴 부품은 미리 확보. 없으면 MTTR이 며칠로 늘어납니다</li>
+   <li><b>챔버 매칭</b> — 같은 모델 여러 대의 결과를 같게 맞추는 일. 팹에서 아주 중요</li>
+   <li><b>알람·로그 분석</b> — 장비가 남긴 기록이 고장분석의 1차 자료</li>
+   <li><b>통신</b>: <b>SECS/GEM</b>(장비↔호스트 표준 통신), <b>MES</b>(생산 관리 시스템)로 이력이 자동 수집됩니다</li>
+  </ul>`,
+  tip:'MTTR을 줄이는 가장 현실적인 방법이 <b>예비품 확보와 표준 작업서</b>입니다. "고치는 실력"보다 "준비"가 숫자를 바꿉니다.'},
+]},
+];
+
+/* ─────────────────────────────────────────
+   [추가지점 2] 게임 데이터
+   ───────────────────────────────────────── */
+const STEPS=[
+ {n:'웨이퍼 제조',e:'💿'},{n:'산화',e:'🔥'},{n:'포토',e:'💡'},{n:'식각',e:'⚡'},
+ {n:'증착·이온주입',e:'🧬'},{n:'금속배선',e:'🔌'},{n:'EDS 검사',e:'🔍'},{n:'패키징',e:'📦'}
+];
+
+const SYMPTOMS=[
+ {s:'챔버를 아무리 배기해도 목표 진공까지 압력이 안 내려간다.',
+  o:['O-링 손상·이물, 배관 이완 등 누설(leak)을 점검한다','RF 출력을 더 올린다','공정 가스 유량을 늘린다','웨이퍼를 한 장 더 넣는다'],
+  a:0,e:'진공이 안 잡히는 대표 원인은 <b>누설</b>과 <b>펌프 성능 저하</b>입니다. O-링·플랜지·밸브를 보고, 헬륨 리크 디텍터로 찾습니다.'},
+ {s:'터보분자펌프(TMP)를 대기압 상태에서 바로 기동하려 한다.',
+  o:['백킹 펌프로 먼저 러핑한 뒤 TMP를 돌린다','그냥 켜도 문제없다','냉각수를 잠그고 켠다','배기 밸브를 닫고 켠다'],
+  a:0,e:'TMP는 <b>저진공 상태에서만</b> 기동할 수 있습니다. 대기압에서 돌리면 날개가 손상됩니다. 그래서 인터록이 걸려 있습니다.'},
+ {s:'식각 공정 중 RF 반사파(Reflected Power)가 갑자기 높아졌다.',
+  o:['매칭 박스·전극 상태와 챔버 내부 오염을 점검한다','웨이퍼 매수를 줄인다','클린룸 습도를 올린다','FOUP를 교체한다'],
+  a:0,e:'반사파 상승은 <b>임피던스 정합 불량</b> 신호입니다. 매칭 네트워크, 전극/샤워헤드 오염, 접지 상태를 봅니다.'},
+ {s:'최근 웨이퍼에서 파티클 불량이 급증했다.',
+  o:['챔버 클리닝 주기와 소모품(샤워헤드·라이너) 상태를 확인한다','공정 시간을 줄인다','진공 게이지를 교체한다','MFC 영점을 올린다'],
+  a:0,e:'파티클은 <b>챔버 내 퇴적물 박리</b>가 주원인입니다. 클리닝 주기(PM 주기)와 소모품 수명 관리가 답입니다.'},
+ {s:'MFC 표시 유량은 정상인데 실제 공정 결과가 계속 달라진다.',
+  o:['MFC 교정(calibration)과 가스 종류별 변환계수를 확인한다','챔버 도어를 열어 확인한다','스크러버를 끈다','웨이퍼를 뒤집어 넣는다'],
+  a:0,e:'MFC는 <b>주기적 교정</b>이 필요하고, 가스 종류가 바뀌면 <b>변환계수(GCF)</b>를 적용해야 실제 유량이 맞습니다.'},
+ {s:'공압 실린더가 전진할 때 덜컹거리며 튀어나간다.',
+  o:['미터-아웃 방식으로 속도를 제어한다','공급 압력을 최대로 올린다','실린더를 단동으로 바꾼다','필터를 제거한다'],
+  a:0,e:'공기는 압축성이 있어 <b>미터-인</b>으로 조이면 스틱슬립이 생깁니다. 배기 쪽을 조이는 <b>미터-아웃</b>이 안정적입니다.'},
+ {s:'설비 정비를 시작하려 한다. 가장 먼저 할 일은?',
+  o:['전원·유틸리티를 차단하고 잠금·표지(LOTO)를 건다','일단 커버를 연다','옆 사람에게 말로만 알린다','전원을 켠 채 빠르게 작업한다'],
+  a:0,e:'정비의 제1원칙은 <b>LOTO</b>입니다. 차단 → 잠금 → 표지 → 잔류에너지 방출 → 무전압 확인 순서입니다.'},
+ {s:'설비 도어를 열면 동작이 멈추는 안전장치가 자꾸 걸려 작업이 늦어진다.',
+  o:['임의로 해제하지 않고 절차에 따라 정비 모드로 작업한다','인터록 스위치를 테이프로 눌러 둔다','센서 배선을 뽑아 둔다','도어를 떼어낸다'],
+  a:0,e:'<b>인터록 무력화는 절대 금지</b>입니다. 중대재해의 전형적 원인이며 시험에서도 항상 오답입니다.'},
+ {s:'같은 부품이 3개월마다 계속 같은 이유로 파손된다.',
+  o:['원인을 없애도록 설비를 개선한다 (개량보전, CM)','더 자주 교체한다','예비품을 많이 사둔다','고장 날 때까지 기다린다',],
+  a:0,e:'반복 고장은 <b>개량보전(CM)</b> 대상입니다. 재질·구조·조건을 바꿔 <b>고장 자체가 안 나게</b> 만드는 것이 정답입니다.'},
+ {s:'질소(N₂) 배관 근처 밀폐된 좁은 공간에 들어가야 한다.',
+  o:['산소농도(18% 이상)를 측정·환기하고 감시인을 두고 들어간다','불활성 가스라 위험하지 않으므로 그냥 들어간다','방독마스크만 쓰면 된다','혼자 빨리 다녀온다'],
+  a:0,e:'N₂는 독성은 없지만 <b>산소를 밀어내 질식</b>시킵니다. 방독마스크는 산소를 공급하지 못하므로 <b>송기마스크</b>가 필요합니다.'},
+ {s:'정전척(ESC)에서 공정이 끝난 웨이퍼가 떨어지지 않는다.',
+  o:['잔류 전하 제거(디척킹) 시퀀스와 백사이드 가스 압력을 점검한다','로봇 힘을 세게 올린다','챔버를 대기압으로 급히 연다','히터 온도를 최대로 올린다'],
+  a:0,e:'잔류 전하가 남으면 웨이퍼가 붙어 있습니다. <b>디척킹(역전압·중화)</b> 절차와 헬륨 백사이드 압력을 확인합니다.'},
+ {s:'설비 도입을 검토 중이다. 잦은 고장 이력이 있는 구조를 설계 단계에서 빼기로 했다.',
+  o:['보전예방(MP)에 해당한다','사후보전(BM)에 해당한다','자주보전에 해당한다','예지보전에 해당한다'],
+  a:0,e:'<b>설계·구매 단계</b>에서 보전성을 반영하는 것이 <b>보전예방(MP)</b>입니다. 이미 있는 설비를 고치면 개량보전(CM)입니다.'},
+ {s:'모터·커플링 부위 진동을 쟀더니 회전주파수의 2배 성분이 유독 크다.',
+  o:['축 정렬(얼라인먼트) 불량을 의심하고 다시 정렬한다','모터를 새것으로 바꾼다','회전수를 두 배로 올린다','벨트를 제거한다'],
+  a:0,e:'<b>1× 성분 = 불평형</b>, <b>2× 성분 = 축 정렬 불량</b>이 전형적인 패턴입니다.'},
+ {s:'베어링에서 고르지 않은 소음과 발열이 생기고 그리스가 검게 변했다.',
+  o:['윤활 상태·정렬을 점검하고 필요하면 베어링을 교체한다','그리스를 가득 채워 넣는다','회전수를 올려 열을 날린다','소음이 줄 때까지 기다린다'],
+  a:0,e:'그리스 변색·발열·이상음은 베어링 손상 징후입니다. <b>과급유는 오히려 발열</b>을 키우므로 적정량이 원칙입니다.'},
+ {s:'진공 챔버 리드를 닫았는데 계속 미세 누설이 있다. 볼트는 다 조였다.',
+  o:['O-링 상태를 보고 대각선 순서로 나눠 다시 조인다','볼트를 한쪽부터 최대 토크로 조인다','리드 위에 무거운 것을 올린다','펌프를 하나 더 단다'],
+  a:0,e:'한쪽부터 끝까지 조이면 O-링이 <b>편하중</b>을 받아 누설이 남습니다. <b>대각선으로 2~3회 나눠</b> 조입니다.'},
+ {s:'모터의 절연저항을 측정했더니 기준값보다 크게 낮게 나왔다.',
+  o:['습기·권선 열화를 의심하고 건조·점검 후 필요 시 교체한다','그대로 계속 운전한다','절연저항계를 쓰지 않고 멀티미터로 다시 잰다','전압을 올려 돌린다'],
+  a:0,e:'절연저항 저하는 감전·지락 사고로 이어집니다. 측정 전 <b>전원 차단·잔류전하 방전</b>은 기본입니다.'},
+ {s:'세정 공정에서 UPW(초순수)의 비저항이 기준(18.2 MΩ·cm)보다 떨어졌다.',
+  o:['이온교환수지·필터 등 순수 제조 설비를 점검한다','물 온도를 올린다','유량을 두 배로 늘린다','그대로 사용한다'],
+  a:0,e:'비저항 저하 = <b>이온성 불순물 증가</b>입니다. 그대로 쓰면 웨이퍼가 오염됩니다.'},
+ {s:'신규 장비를 반입해 유틸리티까지 연결했다. 다음에 할 일은?',
+  o:['리크 체크·접지·절연저항을 점검한 뒤 파워를 켠다','바로 파워를 켜고 공정을 돌린다','바로 양산에 투입한다','인터록을 해제해 둔다'],
+  a:0,e:'후크업 다음은 <b>점검(리크·접지·절연)</b>입니다. 그 뒤에 파워 온 → 셋업 → 검증(Qual) → 양산 이관 순서입니다.'},
+];
+
+/* 계산 문제 생성기 */
+const CALC=[
+ ()=>{const h=[400,500,600,800][Math.floor(Math.random()*4)],f=[4,5,8,10][Math.floor(Math.random()*4)];
+   return {q:`총 가동시간 ${h}시간 동안 고장이 ${f}회 발생했다. <b>MTBF</b>는 몇 시간인가?`,
+     a:h/f,unit:'시간',
+     e:`MTBF = 총 가동시간 ÷ 고장 횟수 = ${h} ÷ ${f} = <b>${h/f}시간</b>`};},
+ ()=>{const m=[60,90,120,150][Math.floor(Math.random()*4)],f=[3,4,5,6][Math.floor(Math.random()*4)];
+   return {q:`고장 ${f}회를 수리하는 데 총 ${m}분이 걸렸다. <b>MTTR</b>은 몇 분인가?`,
+     a:m/f,unit:'분',
+     e:`MTTR = 총 수리시간 ÷ 고장 횟수 = ${m} ÷ ${f} = <b>${m/f}분</b>`};},
+ ()=>{const b=[90,95,180,240][Math.floor(Math.random()*4)],r=[10,5,20,60][Math.floor(Math.random()*4)];
+   return {q:`MTBF가 ${b}시간, MTTR이 ${r}시간이다. <b>가용도(가동률)</b>는 몇 %인가?`,
+     a:Math.round(b/(b+r)*1000)/10,unit:'%',
+     e:`가용도 = MTBF ÷ (MTBF+MTTR) = ${b} ÷ ${b+r} = <b>${Math.round(b/(b+r)*1000)/10}%</b>`};},
+ ()=>{const load=[480,400,600][Math.floor(Math.random()*3)],stop=[80,40,60,120][Math.floor(Math.random()*4)];
+   const run=load-stop; return {q:`부하시간 ${load}분 중 정지시간이 ${stop}분이었다. <b>시간가동률</b>은 몇 %인가?`,
+     a:Math.round(run/load*1000)/10,unit:'%',
+     e:`시간가동률 = 가동시간 ÷ 부하시간 = ${run} ÷ ${load} = <b>${Math.round(run/load*1000)/10}%</b>`};},
+ ()=>{const t=[90,80,85][Math.floor(Math.random()*3)],p=[80,90,75][Math.floor(Math.random()*3)],q=[95,98,90][Math.floor(Math.random()*3)];
+   const v=Math.round(t*p*q/10000*10)/10;
+   return {q:`시간가동률 ${t}%, 성능가동률 ${p}%, 양품률 ${q}%일 때 <b>설비종합효율(OEE)</b>은 몇 %인가?`,
+     a:v,unit:'%',
+     e:`OEE = 시간가동률 × 성능가동률 × 양품률 = ${t/100} × ${p/100} × ${q/100} = <b>${v}%</b> (더하지 말고 곱합니다)`};},
+ ()=>{const d=[50,63,80,100][Math.floor(Math.random()*4)],p=[0.4,0.5,0.6][Math.floor(Math.random()*3)];
+   const area=Math.PI*Math.pow(d/2,2); const f=Math.round(p*area); // MPa*mm^2 = N
+   return {q:`안지름 ${d}mm 공압 실린더에 ${p}MPa를 공급했다. 이론 <b>전진 출력</b>은 약 몇 N인가? (소수점 반올림)`,
+     a:f,unit:'N',tol:Math.max(3,Math.round(f*0.02)),
+     e:`F = P × A, A = π×(${d}/2)² ≈ ${Math.round(area)}mm², F = ${p}N/mm² × ${Math.round(area)}mm² ≈ <b>${f}N</b> (1MPa = 1N/mm²)`};},
+ ()=>{const r=[0.9,0.95,0.8][Math.floor(Math.random()*3)],n=[2,3][Math.floor(Math.random()*2)];
+   const v=Math.round(Math.pow(r,n)*10000)/10000;
+   return {q:`신뢰도 ${r}인 부품 ${n}개가 <b>직렬</b>로 연결되어 있다. 전체 신뢰도는? (소수 넷째자리까지)`,
+     a:v,unit:'',tol:0.0006,
+     e:`직렬은 곱합니다. ${r}<sup>${n}</sup> = <b>${v}</b> — 부품이 늘수록 신뢰도는 떨어집니다.`};},
+ ()=>{const r=[0.9,0.8,0.95][Math.floor(Math.random()*3)];
+   const v=Math.round((1-Math.pow(1-r,2))*10000)/10000;
+   return {q:`신뢰도 ${r}인 설비 2대를 <b>병렬</b>(예비기)로 두었다. 전체 신뢰도는? (소수 넷째자리까지)`,
+     a:v,unit:'',tol:0.0006,
+     e:`병렬은 둘 다 실패할 확률을 뺍니다. 1 − (1−${r})² = <b>${v}</b> — 예비기 한 대의 효과가 큽니다.`};},
+ ()=>{const b=[200,250,500,400][Math.floor(Math.random()*4)];
+   const v=Math.round(1/b*100000)/100000;
+   return {q:`MTBF가 ${b}시간인 설비의 <b>고장률(λ)</b>은 몇 회/시간인가? (소수 다섯째자리까지)`,
+     a:v,unit:'회/h',tol:0.000006,
+     e:`λ = 1 ÷ MTBF = 1 ÷ ${b} = <b>${v} 회/시간</b>`};},
+ ()=>{const V=[12,24,100,220][Math.floor(Math.random()*4)],R=[4,8,10,20][Math.floor(Math.random()*4)];
+   return {q:`${V}V 전원에 ${R}Ω 저항을 연결했다. 흐르는 <b>전류</b>는 몇 A인가?`,
+     a:Math.round(V/R*100)/100,unit:'A',tol:0.02,
+     e:`옴의 법칙 I = V ÷ R = ${V} ÷ ${R} = <b>${Math.round(V/R*100)/100}A</b>`};},
+ ()=>{const a=[6,10,12,20][Math.floor(Math.random()*4)],b=[3,15,4,30][Math.floor(Math.random()*4)];
+   const v=Math.round(a*b/(a+b)*100)/100;
+   return {q:`${a}Ω과 ${b}Ω을 <b>병렬</b>로 연결했을 때 합성저항은 몇 Ω인가?`,
+     a:v,unit:'Ω',tol:0.02,
+     e:`병렬 = 곱÷합 = (${a}×${b}) ÷ (${a}+${b}) = <b>${v}Ω</b> — 항상 가장 작은 저항보다 작아집니다.`};},
+ ()=>{const n=[6205,6208,6210,6212][Math.floor(Math.random()*4)];
+   const v=(n%100)*5;
+   return {q:`베어링 호칭번호 <b>${n}</b>의 <b>안지름</b>은 몇 mm인가?`,
+     a:v,unit:'mm',tol:0.4,
+     e:`뒤 두 자리 ${String(n).slice(-2)} × 5 = <b>${v}mm</b> (04번부터 적용, 00~03은 10·12·15·17mm 예외)`};},
+];
+
+/* ─────────────────────────────────────────
+   [추가지점 3] 테스트 문제은행 — 수요일 자료의 기출문항을 여기에 추가
+   c: 단원 / q: 문제 / o: 보기 / a: 정답 인덱스 / e: 해설
+   ───────────────────────────────────────── */
+const BANK=[
+{c:'c1',q:'현재 반도체 양산에서 가장 널리 쓰이는 웨이퍼 지름은?',o:['150mm','200mm','300mm','450mm'],a:2,
+ e:'현재 주력은 <b>300mm(12인치)</b>입니다. 200mm는 구형 라인, 450mm는 상용화되지 않았습니다.'},
+{c:'c1',q:'클린룸 청정도 등급(ISO 14644-1)에 대한 설명으로 옳은 것은?',
+ o:['등급 숫자가 클수록 깨끗하다','등급 숫자가 작을수록 깨끗하다','온도만으로 등급을 정한다','사람 수로 등급을 정한다'],a:1,
+ e:'ISO Class는 <b>숫자가 작을수록 청정</b>합니다. 단위 부피당 허용 입자 수가 적다는 뜻입니다.'},
+{c:'c1',q:'클린룸 내부를 주변보다 높은 압력(양압)으로 유지하는 이유는?',
+ o:['외부 오염물질의 유입을 막기 위해','작업자의 호흡을 돕기 위해','장비 소음을 줄이기 위해','전력을 절약하기 위해'],a:0,
+ e:'양압이면 틈으로 <b>공기가 밖으로만 나가므로</b> 외부 먼지가 들어오지 못합니다.'},
+{c:'c1',q:'웨이퍼를 절단하기 전, 웨이퍼 상태에서 칩의 전기적 양·불량을 판정하는 공정은?',
+ o:['CMP','EDS','다이싱','와이어 본딩'],a:1,
+ e:'<b>EDS</b>(Electrical Die Sorting)는 웨이퍼 상태에서 프로브 카드로 칩을 검사합니다. 최종 테스트는 패키징 후입니다.'},
+{c:'c2',q:'반도체 8대 공정의 순서로 옳은 것은?',
+ o:['산화 → 웨이퍼 → 식각 → 포토 → 패키징','웨이퍼 → 산화 → 포토 → 식각 → 증착·이온주입 → 금속배선 → EDS → 패키징',
+    '포토 → 산화 → 웨이퍼 → EDS → 식각','웨이퍼 → 패키징 → 포토 → 식각 → EDS'],a:1,
+ e:'"웨-산-포-식-증-금-이-패" 순서입니다. 가운데 포토·식각·증착은 수십 번 반복됩니다.'},
+{c:'c2',q:'포토 공정의 기본 3단계를 순서대로 나열한 것은?',
+ o:['현상 → 노광 → 도포','도포 → 노광 → 현상','노광 → 도포 → 현상','도포 → 현상 → 노광'],a:1,
+ e:'감광액 <b>도포</b> → <b>노광</b>(마스크에 빛) → <b>현상</b>(씻어내기) 순입니다.'},
+{c:'c2',q:'포토 공정 구역의 조명을 노란색으로 유지하는 이유는?',
+ o:['작업자의 눈을 보호하기 위해','감광액이 짧은 파장의 빛에 반응하기 때문','정전기를 줄이기 위해','온도를 낮추기 위해'],a:1,
+ e:'PR은 자외선·단파장 빛에 감광되므로 해당 파장을 제거한 <b>옐로우 조명</b>을 사용합니다.'},
+{c:'c2',q:'건식 식각(플라즈마 식각)이 습식 식각보다 미세 가공에 유리한 이유는?',
+ o:['등방성 식각이기 때문','이방성 식각이 가능하기 때문','약품을 쓰지 않기 때문','상온에서 하기 때문'],a:1,
+ e:'건식 식각은 <b>이방성</b>이라 옆으로 파고들지 않고 아래로만 깎여 미세 패턴 형성에 유리합니다.'},
+{c:'c2',q:'금속 타깃에 아르곤 이온을 충돌시켜 튀어나온 입자를 웨이퍼에 증착하는 방법은?',
+ o:['LPCVD','스퍼터링(PVD)','ALD','이온주입'],a:1,
+ e:'<b>스퍼터링</b>은 대표적인 물리기상증착(PVD)으로, 금속 배선용 박막 형성에 사용됩니다.'},
+{c:'c2',q:'실리콘을 N형 반도체로 만들기 위해 주입하는 불순물은?',
+ o:['붕소(B)','인(P)','알루미늄(Al)','갈륨(Ga)'],a:1,
+ e:'<b>인(P)·비소(As)</b>는 5족으로 전자를 남겨 N형, <b>붕소(B)</b>는 3족으로 정공을 만들어 P형이 됩니다.'},
+{c:'c2',q:'증착 후 표면의 요철을 평탄하게 만드는 공정은?',
+ o:['CMP','어닐링','다이싱','스핀 코팅'],a:0,
+ e:'<b>CMP</b>(화학적 기계적 연마)는 슬러리와 패드로 표면을 갈아 평탄화합니다.'},
+{c:'c3',q:'진공에 대한 설명으로 옳은 것은?',
+ o:['진공도가 높을수록 압력이 높다','진공도가 높을수록 압력이 낮다','1기압은 76 Torr이다','Torr는 온도의 단위이다'],a:1,
+ e:'<b>진공도가 높다 = 압력이 낮다</b>입니다. 1기압 = 760 Torr = 약 101.3 kPa.'},
+{c:'c3',q:'터보분자펌프(TMP)에 대한 설명으로 옳지 않은 것은?',
+ o:['고진공 영역에서 사용한다','고속 회전 날개로 기체 분자를 밀어낸다','대기압에서 단독으로 기동할 수 있다','앞단에 백킹 펌프가 필요하다'],a:2,
+ e:'TMP는 <b>대기압에서 단독 기동이 불가</b>합니다. 반드시 러핑(백킹) 펌프로 먼저 저진공을 만든 뒤 가동합니다.'},
+{c:'c3',q:'기체 종류의 영향을 거의 받지 않아 정확한 공정 압력 측정에 사용되는 게이지는?',
+ o:['피라니 게이지','열전대 게이지','캐패시턴스 마노미터','이온 게이지'],a:2,
+ e:'<b>캐패시턴스 마노미터</b>는 격막의 변위를 측정하므로 기체 종류에 무관하게 정확합니다.'},
+{c:'c3',q:'MFC(Mass Flow Controller)의 기능은?',
+ o:['챔버 압력을 직접 배기한다','공정 가스의 유량을 정밀 제어한다','웨이퍼를 이송한다','플라즈마를 발생시킨다'],a:1,
+ e:'MFC는 <b>질량유량제어기</b>로, sccm·slm 단위로 가스 유량을 제어합니다.'},
+{c:'c3',q:'실란(SiH₄) 가스의 가장 큰 위험성은?',
+ o:['불활성이라 위험이 없다','공기와 접촉하면 자연발화한다','상온에서 고체이다','물에 잘 녹아 안전하다'],a:1,
+ e:'실란은 <b>자연발화성</b> 가스입니다. 누출 즉시 발화할 수 있어 전용 캐비닛·감지기·퍼지가 필수입니다.'},
+{c:'c3',q:'반도체 장비 배기가스를 대기로 내보내기 전에 처리하는 설비는?',
+ o:['칠러','스크러버','로드락','매칭 박스'],a:1,
+ e:'<b>스크러버</b>가 유해 배기가스를 연소·습식 처리한 뒤 배출합니다.'},
+{c:'c4',q:'고장이 발생한 후에 수리하는 보전 방식은?',
+ o:['예방보전(PM)','사후보전(BM)','개량보전(CM)','보전예방(MP)'],a:1,
+ e:'<b>사후보전(BM, Breakdown Maintenance)</b>입니다.'},
+{c:'c4',q:'같은 고장이 반복되지 않도록 설비의 구조·재질을 개선하는 보전은?',
+ o:['사후보전(BM)','시간기준보전(TBM)','개량보전(CM)','자주보전'],a:2,
+ e:'<b>개량보전(CM)</b>은 고장 원인 자체를 없애도록 설비를 개선하는 활동입니다.'},
+{c:'c4',q:'설비의 진동·온도·전류 등 상태를 감시하다가 이상 징후가 보이면 정비하는 방식은?',
+ o:['시간기준보전(TBM)','상태기준보전(CBM, 예지보전)','사후보전(BM)','보전예방(MP)'],a:1,
+ e:'<b>CBM(예지보전, PdM)</b>입니다. 달력 주기로 하는 것은 TBM입니다.'},
+{c:'c4',q:'MTBF와 MTTR에 대한 설명으로 옳은 것은?',
+ o:['MTBF는 짧을수록 좋다','MTTR은 길수록 좋다','MTBF는 평균고장간격으로 길수록 좋다','MTTR은 고장 횟수를 뜻한다'],a:2,
+ e:'<b>MTBF(평균고장간격)는 길수록</b> 신뢰성이 좋고, <b>MTTR(평균수리시간)은 짧을수록</b> 보전성이 좋습니다.'},
+{c:'c4',q:'총 가동시간 600시간 동안 고장이 5회 발생했다면 MTBF는?',
+ o:['60시간','100시간','120시간','300시간'],a:2,
+ e:'MTBF = 600 ÷ 5 = <b>120시간</b>'},
+{c:'c4',q:'설비종합효율(OEE)을 구하는 식은?',
+ o:['시간가동률 + 성능가동률 + 양품률','시간가동률 × 성능가동률 × 양품률','(시간가동률 + 성능가동률) ÷ 2','가동시간 ÷ 고장 횟수'],a:1,
+ e:'OEE는 세 값을 <b>곱합니다</b>. 더하거나 평균 내면 안 됩니다.'},
+{c:'c4',q:'설비의 6대 로스에 해당하지 않는 것은?',
+ o:['고장 로스','준비·조정 로스','속도저하 로스','재고 보관 로스'],a:3,
+ e:'6대 로스는 고장 / 준비·조정 / 공전·순간정지 / 속도저하 / 불량·수정 / 초기수율입니다.'},
+{c:'c4',q:'욕조 곡선에서 고장률이 일정하게 유지되는 구간은?',
+ o:['초기고장기','우발고장기','마모고장기','전 구간'],a:1,
+ e:'<b>우발고장기</b>에 고장률이 일정합니다. 초기는 감소, 마모기는 증가합니다.'},
+{c:'c4',q:'TPM의 기본이 되는 3가지 활동으로 옳은 것은?',
+ o:['청소·급유·조임','설계·구매·검수','교육·평가·보고','도장·용접·조립'],a:0,
+ e:'<b>청소·급유·조임(체결)</b>이 자주보전의 기본 3활동입니다.'},
+{c:'c5',q:'파스칼의 원리를 이용한 유압·공압의 힘 계산식은?',
+ o:['F = P ÷ A','F = P × A','F = A ÷ P','F = P + A'],a:1,
+ e:'<b>힘 = 압력 × 단면적</b>. 1MPa = 1N/mm²로 계산하면 편합니다.'},
+{c:'c5',q:'공압 3점 세트에 포함되지 않는 것은?',
+ o:['필터','레귤레이터','루브리케이터','릴레이'],a:3,
+ e:'공압 3점 세트는 <b>필터 + 압력조절기(레귤레이터) + 급유기(루브리케이터)</b>입니다.'},
+{c:'c5',q:'복동 실린더의 전·후진을 제어하는 데 일반적으로 사용하는 밸브는?',
+ o:['3포트 2위치','5포트 2위치','체크밸브','릴리프밸브'],a:1,
+ e:'복동 실린더는 양쪽에 공기를 넣고 빼야 하므로 <b>5포트 2위치(5/2) 방향제어밸브</b>를 씁니다.'},
+{c:'c5',q:'공압 실린더의 속도 제어에서 일반적으로 권장되는 방식은?',
+ o:['미터-인','미터-아웃','블리드 오프','제어하지 않음'],a:1,
+ e:'공기의 압축성 때문에 미터-인은 움직임이 불안정합니다. 배기 쪽을 조이는 <b>미터-아웃</b>이 표준입니다.'},
+{c:'c5',q:'금속 물체만 감지할 수 있는 센서는?',
+ o:['정전용량형 근접센서','유도형 근접센서','광전센서','초음파센서'],a:1,
+ e:'<b>유도형</b>은 금속만, <b>정전용량형</b>은 비금속·액체까지 감지합니다.'},
+{c:'c5',q:'누름버튼에서 손을 떼도 동작이 계속 유지되도록 하는 회로는?',
+ o:['인터록 회로','자기유지 회로','타이머 회로','한시 회로'],a:1,
+ e:'<b>자기유지 회로</b>는 출력 접점으로 자신의 입력을 유지시킵니다.'},
+{c:'c5',q:'PLC의 기본 구성으로 옳지 않은 것은?',
+ o:['입력부','CPU(연산부)','출력부','유압 펌프'],a:3,
+ e:'PLC는 전원부·입력부·CPU·출력부로 구성됩니다.'},
+{c:'c5',q:'비상정지 스위치를 b접점(NC)으로 구성하는 이유는?',
+ o:['배선이 끊어져도 정지가 걸리게 하기 위해','전력을 아끼기 위해','배선이 쉬워서','속도가 빨라서'],a:0,
+ e:'단선 시에도 안전 측으로 동작하게 하는 <b>페일세이프</b> 설계입니다.'},
+{c:'c6',q:'설비 정비 전 전원을 차단하고 잠금장치와 표지를 부착하는 안전 절차는?',
+ o:['LOTO','MSDS','OEE','TPM'],a:0,
+ e:'<b>LOTO</b>(Lock Out / Tag Out)입니다.'},
+{c:'c6',q:'LOTO에서 잠금장치의 열쇠 관리 원칙으로 옳은 것은?',
+ o:['관리자가 모아서 보관한다','작업 당사자가 보관하고 본인이 해제한다','아무나 열 수 있게 둔다','열쇠 없이 잠근다'],a:1,
+ e:'열쇠는 반드시 <b>작업 당사자</b>가 보관하고 <b>본인이</b> 해제해야 합니다.'},
+{c:'c6',q:'화학물질의 유해·위험성, 응급조치 요령 등을 기재한 자료는?',
+ o:['MSDS','OEE','PID','SOP'],a:0,
+ e:'<b>MSDS</b>(물질안전보건자료)이며, 취급 장소에 비치·게시해야 합니다.'},
+{c:'c6',q:'산소 결핍이 우려되는 밀폐공간에서 사용해야 할 호흡보호구는?',
+ o:['방진마스크','방독마스크','송기마스크(공기호흡기)','일반 면마스크'],a:2,
+ e:'방독·방진마스크는 산소를 공급하지 못합니다. 산소결핍에는 <b>송기마스크/공기호흡기</b>가 필요합니다.'},
+{c:'c6',q:'반도체 소자를 정전기 방전(ESD)으로부터 보호하는 대책이 아닌 것은?',
+ o:['접지 손목띠 착용','이온라이저 사용','실내 습도를 극도로 낮게 유지','제전복·도전성 매트 사용'],a:2,
+ e:'습도가 <b>너무 낮으면 정전기가 더 잘 발생</b>합니다. 적정 습도 유지가 ESD 대책입니다.'},
+{c:'c6',q:'전기설비 화재(C급)에 사용하면 안 되는 소화 방법은?',
+ o:['이산화탄소 소화기','분말 소화기','물 소화(주수)','전원 차단 후 소화'],a:2,
+ e:'전기 화재에 물을 뿌리면 <b>감전 위험</b>이 있습니다. CO₂·분말 소화기를 사용합니다.'},
+{c:'c6',q:'고압가스 실린더 취급 방법으로 옳지 않은 것은?',
+ o:['세워서 체인·밴드로 고정한다','밸브 보호캡을 씌워 운반한다','가연성과 산소를 함께 보관한다','전용 카트로 운반한다'],a:2,
+ e:'<b>가연성 가스와 조연성(산소)은 분리 보관</b>해야 합니다.'},
+
+{c:'c7',q:'베어링 호칭번호 6208의 안지름은?',o:['8mm','32mm','40mm','62mm'],a:2,
+ e:'뒤 두 자리 08 × 5 = <b>40mm</b>입니다.'},
+{c:'c7',q:'플랜지나 챔버 리드의 볼트를 조이는 올바른 방법은?',
+ o:['한쪽 끝부터 순서대로 최대 토크로 조인다','대각선 순서로 2~3회 나누어 조인다','아무 순서나 상관없다','손으로만 조인다'],a:1,
+ e:'<b>대각선으로 나누어</b> 조여야 밀착이 고르게 되어 누설이 없습니다.'},
+{c:'c7',q:'윤활의 목적으로 옳지 않은 것은?',o:['마찰 감소','냉각','방청','전기 절연 파괴'],a:3,
+ e:'윤활의 목적은 <b>감마·냉각·밀봉·방청·청정</b>입니다.'},
+{c:'c7',q:'그리스와 윤활유(오일)를 비교한 설명으로 옳은 것은?',
+ o:['그리스가 냉각 효과가 더 크다','오일은 순환 급유가 가능하고 냉각 효과가 크다','그리스는 액체이다','오일은 밀봉이 필요 없는 곳에만 쓴다'],a:1,
+ e:'오일은 순환시켜 열을 빼낼 수 있어 <b>고속·고온부</b>에 유리합니다. 그리스는 밀봉·급유 간격에서 유리합니다.'},
+{c:'c7',q:'베어링에 그리스를 필요 이상으로 가득 채웠을 때 나타나는 현상은?',
+ o:['수명이 무조건 늘어난다','교반 저항으로 발열이 증가한다','소음이 완전히 사라진다','회전수가 올라간다'],a:1,
+ e:'<b>과급유도 고장 원인</b>입니다. 저어대느라 발열해 오히려 베어링을 손상시킵니다.'},
+{c:'c7',q:'회전기계의 진동에서 회전주파수의 2배 성분이 크게 나타날 때 가장 의심되는 원인은?',
+ o:['불평형(언밸런스)','축 정렬 불량(미스얼라인먼트)','전압 강하','윤활유 과다'],a:1,
+ e:'<b>1× = 불평형, 2× = 축 정렬 불량</b>이 대표적 패턴입니다.'},
+{c:'c7',q:'진공 챔버의 밀봉에 주로 사용하며, 흠집이나 이물이 있으면 곧바로 누설로 이어지는 요소는?',
+ o:['O-링','베어링','커플링','타이밍벨트'],a:0,
+ e:'<b>O-링</b>입니다. 재사용 금지가 원칙이고 조립 전 반드시 상태를 확인합니다.'},
+{c:'c8',q:'24V 전원에 12Ω 저항을 연결했을 때 흐르는 전류는?',o:['0.5A','2A','12A','288A'],a:1,
+ e:'I = V ÷ R = 24 ÷ 12 = <b>2A</b>'},
+{c:'c8',q:'10Ω 저항 2개를 병렬로 연결했을 때 합성저항은?',o:['5Ω','10Ω','20Ω','100Ω'],a:0,
+ e:'같은 값 2개 병렬은 <b>절반</b>인 5Ω입니다. 병렬 합성저항은 항상 가장 작은 저항보다 작습니다.'},
+{c:'c8',q:'3상 유도전동기의 회전 방향을 반대로 바꾸는 방법은?',
+ o:['전압을 낮춘다','3상 중 임의의 두 선을 서로 바꾼다','주파수를 두 배로 올린다','접지선을 제거한다'],a:1,
+ e:'<b>두 상의 결선을 바꾸면</b> 회전 자기장의 방향이 반대가 됩니다.'},
+{c:'c8',q:'PN 접합 다이오드의 대표적인 기능은?',
+ o:['전류를 한 방향으로만 흐르게 하는 정류','전압을 증폭','저항을 0으로 만듦','주파수를 발생'],a:0,
+ e:'다이오드는 <b>정류</b> 소자입니다. 순방향에서 실리콘은 약 0.7V가 강하합니다.'},
+{c:'c8',q:'모터 권선이나 케이블의 절연 상태를 측정하는 계측기는?',
+ o:['클램프미터','절연저항계(메거)','오실로스코프','타코미터'],a:1,
+ e:'<b>절연저항계(메거)</b>로 MΩ 단위의 절연저항을 측정합니다.'},
+{c:'c8',q:'모터의 회전수를 주파수 변환으로 조절하여 에너지를 절감하는 장치는?',
+ o:['인버터(VFD)','정류기','변압기','콘덴서'],a:0,
+ e:'<b>인버터</b>는 주파수를 바꿔 회전수를 제어합니다. N ≈ 120f / P.'},
+{c:'c9',q:'버니어 캘리퍼스로 읽을 수 있는 일반적인 최소 눈금은?',
+ o:['0.5mm','0.05mm 또는 0.02mm','0.001mm','1mm'],a:1,
+ e:'버니어 캘리퍼스는 <b>0.05 / 0.02mm</b>, 마이크로미터는 <b>0.01mm</b>까지 읽습니다.'},
+{c:'c9',q:'축의 흔들림(런아웃)이나 축 정렬 상태를 확인할 때 주로 쓰는 측정기는?',
+ o:['다이얼 게이지','줄자','수준기','토크렌치'],a:0,
+ e:'<b>다이얼 게이지</b>로 0.01mm 단위의 변위를 읽어 정렬·런아웃을 확인합니다.'},
+{c:'c9',q:'설비 상태 감시 기법과 목적이 잘못 짝지어진 것은?',
+ o:['진동 분석 — 불평형·정렬 불량 진단','열화상 — 접점·베어링 발열 확인','오일 분석 — 마모 금속가루 확인','초음파 — 도장 두께 측정'],a:3,
+ e:'초음파는 <b>가스·진공 누설과 전기 아크</b> 탐지에 씁니다.'},
+{c:'c9',q:'고장 원인을 사람·설비·재료·방법(4M)으로 갈래 쳐 정리하는 기법은?',
+ o:['파레토도','특성요인도(어골도)','간트차트','히스토그램'],a:1,
+ e:'<b>특성요인도(피시본)</b>입니다. 파레토도는 건수를 큰 순서로 정렬해 우선순위를 정합니다.'},
+{c:'c9',q:'신뢰도 0.9인 부품 3개가 직렬로 연결된 계통의 전체 신뢰도는?',
+ o:['0.9','0.729','0.99','2.7'],a:1,
+ e:'직렬은 곱합니다. 0.9³ = <b>0.729</b> — 부품이 늘수록 신뢰도는 떨어집니다.'},
+{c:'c9',q:'MTBF가 500시간인 설비의 고장률(λ)은?',
+ o:['500회/시간','0.002회/시간','0.5회/시간','5회/시간'],a:1,
+ e:'λ = 1 ÷ MTBF = 1 ÷ 500 = <b>0.002회/시간</b>'},
+{c:'c10',q:'반도체 세정에 쓰이는 초순수(UPW)의 품질 기준으로 널리 쓰이는 값은?',
+ o:['비저항 18.2 MΩ·cm','pH 14','경도 300ppm','전도도 1000 µS/cm'],a:0,
+ e:'UPW는 이온이 거의 없어 <b>비저항 18.2 MΩ·cm</b>가 기준입니다. 값이 떨어지면 불순물이 늘어난 것입니다.'},
+{c:'c10',q:'반도체 장비에 공급되는 유틸리티가 아닌 것은?',
+ o:['PCW(공정 냉각수)','CDA(청정건조공기)','N₂(질소)','슬러지 케이크'],a:3,
+ e:'유틸리티는 전력·UPW·PCW·CDA·N₂·하우스 배큠·배기 등입니다.'},
+{c:'c10',q:'반도체 팹의 배기 계통을 성질별로 분리하여 운영하는 가장 큰 이유는?',
+ o:['설치비가 싸서','서로 다른 성분이 섞여 반응·사고가 나는 것을 막기 위해','소음을 줄이려고','덕트가 예뻐서'],a:1,
+ e:'산·알칼리, 독성·가연성, 일반, VOC를 <b>분리 배기</b>해 반응·역류 사고를 막습니다.'},
+{c:'c10',q:'신규 장비 반입 후 유틸리티를 연결한 다음 단계로 가장 적절한 것은?',
+ o:['바로 양산 웨이퍼를 투입한다','리크 체크·접지·절연저항을 점검한다','인터록을 해제한다','장비를 다시 포장한다'],a:1,
+ e:'후크업 → <b>점검(리크·접지·절연)</b> → 파워 온 → 셋업 → 검증(Qual) → 양산 이관 순서입니다.'},
+{c:'c10',q:'반도체 장비와 호스트 컴퓨터 사이의 표준 통신 규격은?',
+ o:['SECS/GEM','HDMI','USB','RS-232 전용'],a:0,
+ e:'<b>SECS/GEM</b>이 장비↔호스트 표준 통신 규격이며, MES로 이력이 수집됩니다.'},
+{c:'c10',q:'MTTR(평균수리시간)을 줄이는 데 가장 직접적으로 도움이 되는 것은?',
+ o:['예비품(스페어) 확보와 표준 작업서 정비','고장 횟수를 세지 않는 것','장비를 더 오래 돌리는 것','점검 주기를 없애는 것'],a:0,
+ e:'부품을 기다리는 시간이 수리시간의 대부분입니다. <b>예비품 확보·표준 작업서</b>가 MTTR을 직접 줄입니다.'},
+];
+
+/* =========================================================
+   상태
+   ========================================================= */
+const store={
+  get(k,d){try{const v=localStorage.getItem(LS+k);return v?JSON.parse(v):d;}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(LS+k,JSON.stringify(v));}catch(e){}}
+};
+let learned=store.get('learned',{});
+let best=store.get('best',{});
+
+/* =========================================================
+   화면 전환
+   ========================================================= */
+const SCREENS=['scHome','scLearn','scQuiz','scResult'];
+function show(id){SCREENS.forEach(s=>$(s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('footin').innerHTML='';return;}
+  f.classList.remove('hidden');$('footin').innerHTML=html;}
+$('btnHome').onclick=goHome;
+function goHome(){show('scHome');foot('');renderHome();}
+
+/* =========================================================
+   홈
+   ========================================================= */
+function renderFab(){
+  const el=$('fabline');const done=CHAPTERS.filter(c=>learned[c.id]).length;
+  const n=CHAPTERS.length;
+  let h='<div class="rail"></div><div class="railfill" id="railfill"></div>';
+  CHAPTERS.forEach((c,i)=>{
+    const x=2+ (96*(i+.5)/n);
+    h+=`<div class="stn ${learned[c.id]?'on':''}" style="left:${x}%">
+        <div class="stnbox">${c.icon}</div><div class="sl">${i+1}</div></div>`;
+  });
+  // 웨이퍼는 마지막으로 끝낸 단원 위에 선다 (하나도 안 끝냈으면 라인 시작점)
+  const wx = done===0 ? 3 : 2 + 96*(done-0.5)/n;
+  h+=`<div class="waf" id="waf" style="left:${wx}%"></div>`;
+  el.innerHTML=h;
+  // 리플로우를 한 번 강제한 뒤 폭을 주어야 transition이 걸린다
+  // (rAF는 탭이 백그라운드면 멈춰서 값이 아예 반영되지 않는다)
+  void el.offsetWidth;
+  const rf=$('railfill');if(rf)rf.style.width=(96*done/n)+'%';
+}
+function renderHome(){
+  const done=CHAPTERS.filter(c=>learned[c.id]).length;
+  $('learnPill').textContent=`${done} / ${CHAPTERS.length}`;
+  $('learnBar').style.width=(done/CHAPTERS.length*100)+'%';
+  renderFab();
+  const list=$('chapList');list.innerHTML='';
+  CHAPTERS.forEach((c,i)=>{
+    const b=document.createElement('button');b.className='big';
+    b.innerHTML=`<div class="bt">${c.icon} ${i+1}. ${c.title} ${learned[c.id]?'<span class="pill" style="color:var(--good);border-color:var(--good)">✓ 완료</span>':''}</div>
+                 <div class="bd">${c.sub} · ${c.cards.length}쪽</div>`;
+    b.onclick=()=>startLearn(i);
+    list.appendChild(b);
+  });
+  [['g1','8대 공정'],['g2','진단'],['g3','계산'],['test','테스트']].forEach(([k])=>{
+    const p=$('p_'+k);if(!p)return;
+    p.textContent = best[k]!=null ? `최고 ${best[k]}${k==='test'?'점':''}` : '–';
+    if(best[k]!=null){p.style.color='var(--gold)';p.style.borderColor='var(--gold)';}
+  });
+}
+document.querySelectorAll('[data-go]').forEach(b=>{
+  b.onclick=()=>{const g=b.dataset.go;
+    if(g==='g1')startOrder(); else if(g==='g2')startDiag();
+    else if(g==='g3')startCalc(); else startTest();};
+});
+
+/* =========================================================
+   배우기
+   ========================================================= */
+let lc={ci:0,pi:0};
+function startLearn(ci){lc={ci,pi:0};show('scLearn');renderLearn();}
+function renderLearn(){
+  const ch=CHAPTERS[lc.ci],card=ch.cards[lc.pi];
+  $('lcard').innerHTML=`
+    <div class="pill" style="margin-bottom:9px">${ch.icon} ${lc.ci+1}단원 · ${lc.pi+1}/${ch.cards.length}쪽</div>
+    <h3>${card.h}</h3>
+    <div class="lead">${card.lead}</div>
+    <div class="lbody">${card.body}</div>
+    ${card.tip?`<div class="tipbox">💡 ${card.tip}</div>`:''}`;
+  $('ldots').innerHTML=ch.cards.map((_,i)=>`<div class="dot ${i<=lc.pi?'on':''}"></div>`).join('');
+  const last=lc.pi===ch.cards.length-1;
+  foot(`<button class="btn ghost" id="lprev" ${lc.pi===0?'disabled':''}>← 이전</button>
+        <button class="btn" id="lnext">${last?'✅ 이 단원 끝내기':'다음 →'}</button>`);
+  $('lprev').onclick=()=>{if(lc.pi>0){lc.pi--;renderLearn();}};
+  $('lnext').onclick=()=>{
+    if(!last){lc.pi++;renderLearn();return;}
+    const first=!learned[ch.id];
+    learned[ch.id]=true;store.set('learned',learned);
+    if(window.FX)FX.banner({icon:'🎓',title:`${lc.ci+1}단원 완료!`,
+      sub:first?'웨이퍼가 다음 스테이션으로 이동합니다':'다시 훑었습니다',stars:3,btn:'확인',onClose:goHome});
+    else goHome();
+  };
+}
+
+/* =========================================================
+   문제 화면 공통 엔진
+   ========================================================= */
+let g={mode:null,items:[],i:0,correct:0,wrong:[],t0:0,answered:false};
+function beginQuiz(mode,items){
+  g={mode,items,i:0,correct:0,wrong:[],t0:Date.now(),answered:false};
+  if(window.FX){FX.reset();$('hud').innerHTML='';FX.hud($('hud'));}
+  show('scQuiz');foot('');nextQ();
+}
+function nextQ(){
+  if(g.i>=g.items.length){finish();return;}
+  g.answered=false;
+  if(g.mode==='order')renderOrder();
+  else if(g.mode==='calc')renderCalc();
+  else renderMCQ();
+}
+function renderMCQ(){
+  const it=g.items[g.i];
+  $('qcard').innerHTML=`
+    <div class="qhead"><span>${g.mode==='test'?'🎯 종합 테스트':'🚨 이상 진단'} ${g.i+1} / ${g.items.length}</span>
+      <span>맞은 개수 ${g.correct}</span></div>
+    <div class="qtext">${it.q||it.s}</div>
+    <div id="opts"></div><div id="expwrap"></div>`;
+  const ow=$('opts');
+  it.o.forEach((o,idx)=>{
+    const b=document.createElement('button');b.className='opt';
+    b.innerHTML=`<b style="color:var(--dim);margin-right:7px">${idx+1}</b>${o}`;
+    b.onclick=()=>answerMCQ(idx,b,ow,it);
+    ow.appendChild(b);
+  });
+  foot(`<button class="btn ghost" id="qquit">그만두기</button>`);
+  $('qquit').onclick=goHome;
+}
+function answerMCQ(idx,btn,ow,it){
+  if(g.answered)return;g.answered=true;
+  const ok=idx===it.a;
+  [...ow.children].forEach((c,i2)=>{c.classList.add('dim');
+    if(i2===it.a){c.classList.add('ok');c.classList.remove('dim');}
+    if(i2===idx&&!ok){c.classList.add('no');c.classList.remove('dim');}});
+  if(ok){g.correct++;window.FX&&FX.ok(btn);}
+  else{g.wrong.push({n:g.i+1,q:it.q||it.s,a:it.o[it.a],e:it.e});window.FX&&FX.no(btn);}
+  $('expwrap').innerHTML=`<div class="exp"><b>${ok?'정답':'정답은 '+(it.a+1)+'번'}</b> · ${it.e}</div>`;
+  foot(`<button class="btn" id="qnext" style="flex:1">${g.i+1>=g.items.length?'결과 보기 →':'다음 문제 →'}</button>`);
+  $('qnext').onclick=()=>{g.i++;nextQ();};
+}
+
+/* ── 게임1: 공정 순서 ── */
+let ord={picked:[],pool:[]};
+function startOrder(){
+  ord={picked:[],pool:shuffle(STEPS)};
+  beginQuiz('order',[{}]);
+}
+function renderOrder(){
+  $('qcard').innerHTML=`
+    <div class="qhead"><span>🧩 8대 공정 라인 세우기</span><span>${ord.picked.length} / 8</span></div>
+    <div class="qtext">웨이퍼가 지나가는 <b>순서대로</b> 공정을 눌러 라인을 세우세요.</div>
+    <div class="slots" id="slots"></div>
+    <div class="chips" id="chips"></div>
+    <div id="expwrap"></div>`;
+  drawOrder();
+  foot(`<button class="btn ghost" id="qquit">그만두기</button>`);
+  $('qquit').onclick=goHome;
+}
+function drawOrder(){
+  $('slots').innerHTML = ord.picked.length
+    ? ord.picked.map((s,i)=>`<div class="slot"><i>${i+1}</i>${s.e} ${s.n}</div>`).join('')
+    : '<span class="note" style="padding:4px 6px">첫 번째 공정부터 눌러 보세요</span>';
+  const cw=$('chips');cw.innerHTML='';
+  ord.pool.forEach(s=>{
+    const used=ord.picked.includes(s);
+    const b=document.createElement('button');b.className='chip'+(used?' used':'');
+    b.innerHTML=`${s.e} ${s.n}`;
+    b.onclick=()=>pickOrder(s,b);
+    cw.appendChild(b);
+  });
+}
+function pickOrder(s,btn){
+  const want=STEPS[ord.picked.length];
+  if(s===want){
+    ord.picked.push(s);g.correct++;window.FX&&FX.ok(btn);drawOrder();
+    if(ord.picked.length===STEPS.length){
+      $('expwrap').innerHTML=`<div class="exp"><b>라인 완성!</b> 웨-산-포-식-증-금-이-패. 가운데 포토·식각·증착은 실제로 수십 번 반복됩니다.</div>`;
+      setTimeout(()=>{g.i=1;finish();},700);
+    }
+  }else{
+    const pos=ord.picked.length+1;
+    // 같은 자리에서 여러 번 틀려도 오답노트에는 한 번만 남긴다
+    if(!g.wrong.some(w=>w.n===pos)){
+      g.wrong.push({n:pos,q:`${pos}번째 공정`,a:want.n,
+        e:`${pos}번째 자리는 <b>${want.n}</b> 입니다.`});
+    }
+    window.FX&&FX.no(btn);
+    $('expwrap').innerHTML=`<div class="exp"><b>아직 아닙니다.</b> ${ord.picked.length+1}번째 자리에 올 공정을 다시 생각해 보세요. (지금까지 ${ord.picked.length}개 성공)</div>`;
+  }
+}
+
+/* ── 게임2: 이상 진단 ──
+   원본 데이터는 정답이 항상 0번이므로, 보기를 섞은 뒤 정답 위치를 다시 찾아 넣는다 */
+function startDiag(){
+  const items=shuffle(SYMPTOMS).slice(0,8).map(x=>{
+    const ans=x.o[x.a],opts=shuffle(x.o);
+    return {q:x.s,o:opts,a:opts.indexOf(ans),e:x.e};
+  });
+  beginQuiz('diag',items);
+}
+
+/* ── 게임3: 지표 계산 ── */
+let calcCur=null;
+function startCalc(){
+  const items=shuffle(CALC).slice(0,6).map(f=>f());
+  beginQuiz('calc',items);
+}
+function renderCalc(){
+  const it=g.items[g.i];calcCur=it;
+  $('qcard').innerHTML=`
+    <div class="qhead"><span>📐 설비 계산소 ${g.i+1} / ${g.items.length}</span><span>맞은 개수 ${g.correct}</span></div>
+    <div class="qtext">${it.q}</div>
+    <div class="calcbox">
+      <table>
+        <tr><td>MTBF / MTTR</td><td>총 가동(수리)시간 ÷ 고장 횟수</td></tr>
+        <tr><td>가용도</td><td>MTBF ÷ (MTBF+MTTR)</td></tr>
+        <tr><td>OEE</td><td>시간 × 성능 × 양품률</td></tr>
+        <tr><td>고장률 λ</td><td>1 ÷ MTBF</td></tr>
+        <tr><td>신뢰도 직렬 / 병렬</td><td>R₁×R₂ &nbsp;/&nbsp; 1−(1−R₁)(1−R₂)</td></tr>
+        <tr><td>공압 출력</td><td>F = P × A (1MPa=1N/mm²)</td></tr>
+        <tr><td>옴의 법칙 / 병렬저항</td><td>V=IR &nbsp;/&nbsp; 곱÷합</td></tr>
+        <tr><td>베어링 안지름</td><td>호칭 뒤 두 자리 × 5</td></tr>
+      </table>
+    </div>
+    <input class="numin" id="cin" type="number" step="any" inputmode="decimal" placeholder="${it.unit?'답 ('+it.unit+')':'답'}">
+    <div id="expwrap"></div>`;
+  foot(`<button class="btn ghost" id="qquit">그만두기</button><button class="btn" id="csub" style="flex:1">확인</button>`);
+  $('qquit').onclick=goHome;
+  $('csub').onclick=submitCalc;
+  $('cin').addEventListener('keydown',e=>{if(e.key==='Enter')submitCalc();});
+  setTimeout(()=>$('cin')&&$('cin').focus(),80);
+}
+function submitCalc(){
+  if(g.answered)return;
+  const el=$('cin'),it=calcCur;
+  const v=parseFloat(el.value);
+  if(isNaN(v)){window.FX&&FX.shake(el);return;}
+  g.answered=true;
+  const tol=it.tol!=null?it.tol:0.15;
+  const ok=Math.abs(v-it.a)<=tol;
+  if(ok){g.correct++;window.FX&&FX.ok(el);}
+  else{g.wrong.push({n:g.i+1,q:it.q.replace(/<[^>]+>/g,''),a:it.a+it.unit,e:it.e});window.FX&&FX.no(el);}
+  el.disabled=true;el.style.borderColor=ok?'var(--good)':'var(--bad)';
+  $('expwrap').innerHTML=`<div class="exp"><b>${ok?'정답':'정답 '+it.a+it.unit}</b> · ${it.e}</div>`;
+  foot(`<button class="btn" id="qnext" style="flex:1">${g.i+1>=g.items.length?'결과 보기 →':'다음 문제 →'}</button>`);
+  $('qnext').onclick=()=>{g.i++;nextQ();};
+}
+
+/* ── 테스트 ── */
+function startTest(){
+  const byCh={};BANK.forEach(q=>{(byCh[q.c]=byCh[q.c]||[]).push(q);});
+  // 단원이 10개이므로 단원마다 2문항씩 = 20문항. 모자라는 단원은 아래에서 채운다
+  let picked=[];
+  Object.keys(byCh).forEach(k=>{picked=picked.concat(shuffle(byCh[k]).slice(0,2));});
+  const rest=shuffle(BANK.filter(q=>!picked.includes(q)));
+  while(picked.length<20&&rest.length)picked.push(rest.pop());
+  beginQuiz('test',shuffle(picked).slice(0,20).map(q=>{
+    const ans=q.o[q.a],opts=shuffle(q.o);
+    return {q:q.q,o:opts,a:opts.indexOf(ans),e:q.e};
+  }));
+}
+
+/* =========================================================
+   결과
+   ========================================================= */
+function finish(){
+  const total = g.mode==='order' ? STEPS.length : g.items.length;
+  // 순서 게임은 결국 8칸을 다 채우므로, "한 번에 맞힌 자리 수"를 점수로 본다
+  const correct = g.mode==='order'
+    ? STEPS.length - new Set(g.wrong.map(w=>w.n)).size
+    : g.correct;
+  const dur=Math.round((Date.now()-g.t0)/1000);
+  const pct=total?Math.round(correct/total*100):0;
+  const score = g.mode==='test' ? Math.round(correct/total*100) : correct;
+
+  show('scResult');foot('');
+  $('resScore').textContent='0';
+  $('resScore').style.color = pct>=80?'var(--good)':pct>=60?'var(--gold)':'var(--bad)';
+  $('resSub').textContent = (g.mode==='order'
+      ? `${total}자리 중 ${correct}자리를 한 번에 성공 (${pct}%)`
+      : `${g.mode==='test'?'100점 만점':'총 '+total+'문제'} · ${correct}/${total} 정답 (${pct}%)`)
+    + ` · ${Math.floor(dur/60)}분 ${dur%60}초`;
+
+  // 순차 판정 연출
+  const rl=$('resList');rl.innerHTML='';
+  const wrongN=new Set(g.wrong.map(w=>w.n));
+  for(let i=1;i<=total;i++){
+    const d=document.createElement('div');d.className='rdot';d.textContent=i;rl.appendChild(d);
+  }
+  [...rl.children].forEach((d,i)=>setTimeout(()=>{
+    d.classList.add('show',wrongN.has(i+1)?'no':'ok');
+  },90+i*55));
+
+  setTimeout(()=>{
+    if(window.FX)FX.countUp($('resScore'),g.mode==='test'?score:correct);
+    else $('resScore').textContent=(g.mode==='test'?score:correct);
+  },90+total*55);
+
+  const mistakes=g.wrong.length;
+  const stars=window.FX?FX.starsFor(mistakes):(mistakes===0?3:mistakes<=2?2:1);
+  setTimeout(()=>{
+    if(window.FX&&pct>=60)FX.banner({icon:pct===100?'🏆':'🎉',
+      title:pct===100?'완벽합니다!':'합격선 통과!',sub:`${total}문제 중 ${correct}개 정답 (${pct}%)`,
+      stars,btn:'결과 보기'});
+  },400+total*55);
+
+  // 최고기록
+  const key=({test:'test',order:'g1',diag:'g2',calc:'g3'})[g.mode];
+  const v=g.mode==='test'?score:correct;
+  if(key&&(best[key]==null||v>best[key])){best[key]=v;store.set('best',best);}
+
+  // 오답노트
+  const w=$('resWrong');
+  if(g.wrong.length){
+    w.innerHTML='<div class="wrongbox"><h4>📝 오답노트</h4>'+
+      g.wrong.map(x=>`<div class="witem"><b>${x.n}. ${esc(x.q)}</b><br>정답: ${x.a}<br><span style="color:var(--dim)">${x.e}</span></div>`).join('')+
+      '</div>';
+  }else{
+    w.innerHTML='<div class="exp" style="margin-top:14px"><b>오답 없음</b> · 틀린 문제가 하나도 없습니다.</div>';
+  }
+
+  $('resRetry').onclick=()=>{
+    ({test:startTest,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
+  };
+  $('resHome').onclick=goHome;
+
+  // 결과 제출(?rc= 링크로 열었을 때만)
+  const sb=$('resSubmit');
+  const hasRC=(window.ResultCollector&&ResultCollector.config&&ResultCollector.config.endpoint)||/[?&]rc=/.test(location.search);
+  sb.style.display = (hasRC && g.mode==='test') ? 'block' : 'none';
+  sb.onclick=()=>{
+    if(window.ResultCollector){
+      ResultCollector.open({score,correct,total,wrong:g.wrong.map(x=>x.n),durationSec:dur,
+        labels:{score:'점수',correct:'정답수',total:'총문항',rate:'정답률(%)',wrong:'오답번호'}});
+    }else{alert('제출 기능은 선생님이 배포한 링크(?rc=...)로 열었을 때 작동합니다.');}
+  };
+}
+
+renderHome();
+</script>
+</body>
+</html>
