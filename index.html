@@ -74,9 +74,10 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .railfill{position:absolute;left:2%;top:46px;height:4px;border-radius:3px;width:0;
   background:linear-gradient(90deg,var(--si2),var(--plasma));transition:width .7s cubic-bezier(.4,1.3,.5,1);
   box-shadow:0 0 12px rgba(124,198,255,.6)}
-.stn{position:absolute;top:22px;transform:translateX(-50%);text-align:center;width:32px}
-.stnbox{width:26px;height:26px;margin:0 auto;border-radius:7px;background:#16202f;border:1px solid #2b3a52;
-  display:flex;align-items:center;justify-content:center;font-size:13px;transition:.3s}
+.stn{position:absolute;top:22px;transform:translateX(-50%);text-align:center;width:32px;overflow:visible}
+.stnbox{width:var(--sbox,26px);height:var(--sbox,26px);margin:0 auto;border-radius:7px;background:#16202f;
+  border:1px solid #2b3a52;display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--sbox,26px) * .55);line-height:1;transition:.3s;overflow:hidden}
 .stn.on .stnbox{background:linear-gradient(180deg,#2a4c7a,#1d3557);border-color:var(--si);
   box-shadow:0 0 14px rgba(59,155,255,.55)}
 .stn .sl{font-size:9.5px;color:var(--dim2);margin-top:22px;white-space:nowrap}
@@ -89,6 +90,8 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   border:1px solid rgba(70,90,120,.6)}
 
 /* ── 진행 막대 ── */
+.mocktimer{display:inline-block;background:#0e1622;border:1px solid var(--line);border-radius:10px;
+  padding:6px 12px;font-size:13px;font-weight:800;color:var(--dim);margin-bottom:8px;font-variant-numeric:tabular-nums}
 .bar{height:8px;background:#111a27;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
 .barin{height:100%;width:0;background:linear-gradient(90deg,var(--si2),var(--good));transition:width .5s}
 
@@ -215,13 +218,18 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   <button class="big" data-go="g3"><div class="bt">📐 설비 계산소 <span class="pill" id="p_g3">–</span></div>
     <div class="bd">MTBF·MTTR·가동률·OEE·신뢰도·공압 출력·옴의 법칙·베어링 안지름을 직접 계산해서 입력합니다.</div></button>
 
-  <div class="sect">🎯 3단계 · 실력 점검 (20문항)</div>
-  <button class="big" data-go="test"><div class="bt">🎯 종합 테스트 <span class="pill" id="p_test">–</span></div>
-    <div class="bd">10개 단원에서 골고루 20문항. 오답노트가 남고, 선생님 링크로 열었다면 결과를 제출할 수 있습니다.</div></button>
+  <div class="sect">🎯 3단계 · 실력 점검</div>
+  <button class="big" data-go="test"><div class="bt">🎯 빠른 점검 (20문항) <span class="pill" id="p_test">–</span></div>
+    <div class="bd">전 단원에서 골고루 20문항. 가볍게 실력을 확인할 때.</div></button>
+  <button class="big" data-go="mock"><div class="bt">🏁 실전 모의고사 (60문항 · 60분) <span class="pill" id="p_mock">–</span></div>
+    <div class="bd">실제 필기와 같은 <b>60문항 · 60분 · 60점 합격</b>. 출제 비중대로 단원별 문항 수를 배분합니다.
+    시간이 끝나면 남은 문항은 오답 처리됩니다.</div></button>
 
   <p class="note" style="margin-top:18px;color:var(--dim2);font-size:11.5px">
-    ※ 이 도구는 공개된 출제기준·직무모형(반도체공정개론 / 신규설비 / 예방·사후·개량보전 / 자동화·공유압 / 안전관리)을
-    바탕으로 만든 <b>개념 학습용</b>입니다. 기출문제집·교재 문항은 자료 확보 후 추가됩니다.
+    ※ 단원 구성은 이 종목 표준 문제집의 10개 Part(반도체 입문 / 사진 / 식각 / 확산 / CVD·PVD·ALD /
+    세정과 CMP / 조립 / 자동화 / 공유압 / 안전관리)와 공개 직무모형에 맞췄습니다.
+    <b>수록 문항은 개념을 바탕으로 직접 만든 것이며, 실제 기출문항은 아직 포함되어 있지 않습니다.</b>
+    기출·교재 자료를 확보하면 문제은행에 추가됩니다.
   </p>
 </section>
 
@@ -365,6 +373,286 @@ const CHAPTERS=[
    <li><b>패키징 순서</b>: 백그라인딩 → 다이싱(절단) → 다이 본딩 → <b>와이어 본딩</b> → 몰딩 → 마킹 → 솔더볼 → <b>최종 테스트</b></li>
   </ul>`,
   tip:'검사가 두 번 나오는 게 헷갈립니다. <b>EDS = 자르기 전(웨이퍼 상태)</b>, <b>파이널 테스트 = 포장 끝난 완제품</b>. "EDS는 웨이퍼, FT는 제품"으로 구분하세요.'},
+]},
+
+/* ── 교재 Part 2 : 사진공정기술 ── */
+{id:'c11',icon:'💡',title:'사진(포토) 공정 심화',sub:'출제 비중이 가장 큰 공정',cards:[
+ {h:'포토 공정 전체 순서 8단계',lead:'베이크가 세 번 나온다',
+  body:`<ol style="padding-left:20px;line-height:1.95">
+   <li><b class="hi">HMDS 프라이밍</b> — 표면을 소수성으로 바꿔 PR <b>밀착력</b>을 높임</li>
+   <li><b>PR 도포(스핀 코팅)</b> — 웨이퍼를 회전시켜 균일하게. 두께는 <b>회전수가 빠를수록 얇아짐</b></li>
+   <li><b>소프트 베이크(프리 베이크)</b> — 용매를 날림, 약 90~110℃</li>
+   <li><b>정렬(Align)</b> — 얼라인 키를 맞춤. 층과 층의 어긋남 = <b class="hi">오버레이</b></li>
+   <li><b>노광(Exposure)</b> — 마스크(레티클)의 상을 PR에 옮김</li>
+   <li><b>PEB</b>(노광 후 베이크) — 정재파(standing wave) 자국을 줄이고 반응을 완성</li>
+   <li><b>현상(Develop)</b> — 현상액(TMAH)으로 씻어내 패턴이 드러남</li>
+   <li><b>하드 베이크</b> + <b>검사</b>(CD 측정·결함) — 불량이면 <b>PR만 벗겨 다시(리워크)</b> 할 수 있음</li>
+  </ol>`,
+  tip:'포토는 <b>다시 할 수 있는 유일한 공정</b>입니다(리워크). 식각·이온주입은 한 번 하면 되돌릴 수 없습니다 — 그래서 포토 검사가 그렇게 깐깐합니다.'},
+ {h:'해상도 — 왜 파장을 줄이나',lead:'R = k₁·λ / NA',
+  body:`얼마나 가늘게 그릴 수 있는지는 두 식으로 정리됩니다.
+  <ul>
+   <li><b class="hi">해상도 R = k₁ · λ / NA</b> → <b>파장 λ가 짧을수록, NA가 클수록 더 가늘게</b></li>
+   <li><b>초점심도 DOF = k₂ · λ / NA²</b> → NA를 키우면 해상도는 좋아지지만 <b>초점 여유는 급격히 줄어듦</b></li>
+  </ul>
+  <table>
+   <tr><th>광원</th><th>파장</th><th>비고</th></tr>
+   <tr><td>g-line / i-line</td><td>436 / 365nm</td><td>수은 램프, 구형</td></tr>
+   <tr><td>KrF</td><td>248nm</td><td>엑시머 레이저</td></tr>
+   <tr><td><b>ArF</b></td><td>193nm</td><td>현재도 주력</td></tr>
+   <tr><td><b>ArF 액침</b></td><td>193nm</td><td>렌즈와 웨이퍼 사이를 <b>물</b>로 채워 실효 NA↑</td></tr>
+   <tr><td><b class="hi">EUV</b></td><td>13.5nm</td><td>반사형 마스크, <b>전 광로가 진공</b></td></tr>
+  </table>`,
+  tip:'"NA를 키우면 좋기만 한가?" → <b>아니오. DOF가 NA의 제곱에 반비례</b>해 줄어듭니다. 이 트레이드오프가 자주 나옵니다.'},
+ {h:'감광액(PR)과 마스크',lead:'양성이 기본',
+  body:`<table>
+   <tr><th></th><th>양성(Positive) PR</th><th>음성(Negative) PR</th></tr>
+   <tr><td>빛 받은 곳</td><td><b>녹아 없어짐</b></td><td><b>남음</b>(경화)</td></tr>
+   <tr><td>패턴</td><td>마스크와 같은 모양</td><td>마스크의 반대 모양</td></tr>
+   <tr><td>해상도</td><td><b>좋음 → 현재 주류</b></td><td>팽윤(부풀음)으로 불리</td></tr>
+  </table>
+  <ul>
+   <li><b>마스크(레티클)</b> — 석영 유리에 크롬으로 회로를 그린 원판. <b>펠리클</b>(얇은 보호막)로 먼지가 초점에서 벗어나게 함</li>
+   <li><b>스테퍼</b>(Step & Repeat) vs <b>스캐너</b>(Step & Scan) — 현재는 스캐너</li>
+   <li>보통 마스크는 <b>4배 축소</b> 투영합니다</li>
+   <li><b>위상반전마스크(PSM)</b>·<b>OPC</b>(광근접보정) — 빛의 회절을 역이용해 해상도를 더 끌어올림</li>
+  </ul>`,
+  tip:'<b>펠리클</b>이 왜 먼지를 막는지: 먼지를 없애는 게 아니라 <b>초점면에서 멀리 띄워</b> 웨이퍼에 상이 맺히지 않게 하는 것입니다.'},
+ {h:'포토 장비의 보전 포인트',lead:'무엇이 틀어지면 불량이 나나',
+  body:`<ul>
+   <li><b>진동·온습도</b> — 나노 단위 정렬이라 <b>제진대</b>와 항온항습이 필수. 바닥 진동이 곧 오버레이 불량</li>
+   <li><b>광원 출력 안정</b> — 노광량(dose)이 흔들리면 선폭(CD)이 변함</li>
+   <li><b>PR 배관·펌프</b> — 기포가 들어가면 도포 얼룩. 노즐 막힘·건조 주의</li>
+   <li><b>핫플레이트 온도 균일도</b> — 베이크 온도 1~2℃ 차이가 CD 차이로</li>
+   <li><b>척(Chuck) 이물</b> — 웨이퍼 뒷면에 파티클이 끼면 웨이퍼가 들려 <b>초점(focus) 불량</b></li>
+  </ul>`,
+  tip:'"CD(선폭)가 웨이퍼 안에서 균일하지 않다"의 단골 원인 = <b>베이크 온도 불균일 · 노광량 편차 · 척 이물</b> 세 가지입니다.'},
+]},
+
+/* ── 교재 Part 3 : 식각공정기술 ── */
+{id:'c12',icon:'⚡',title:'식각 공정 심화',sub:'선택비와 이방성이 전부',cards:[
+ {h:'식각을 평가하는 네 가지 잣대',lead:'속도 · 균일도 · 선택비 · 방향성',
+  body:`<ul>
+   <li><b>식각률(Etch Rate)</b> — 분당 몇 Å 깎이나</li>
+   <li><b>균일도(Uniformity)</b> — 웨이퍼 안에서 고르게 깎였나</li>
+   <li><b class="hi">선택비(Selectivity)</b> = <b>깎고 싶은 막의 식각률 ÷ 안 깎였으면 하는 막(마스크·하부막)의 식각률</b> → <b>클수록 좋다</b></li>
+   <li><b class="hi">이방성(Anisotropy)</b> — 아래로만 파이는 정도. 옆으로 파이면 <b>언더컷</b>이 생겨 선폭이 무너짐</li>
+  </ul>
+  <b>종횡비(Aspect Ratio)</b> = 깊이 ÷ 폭. 높을수록 깎기 어렵고 <b>로딩 효과</b>(패턴 밀도에 따라 식각률이 달라짐)가 커집니다.`,
+  tip:'"선택비가 낮으면?" → 마스크나 <b>하부막까지 같이 깎여</b> 소자가 망가집니다. 선택비는 <b>클수록 좋다</b>는 방향을 반대로 답하지 마세요.'},
+ {h:'건식 식각 장비의 속',lead:'플라즈마 = 물리 + 화학',
+  body:`플라즈마 식각은 두 작용이 함께 일어납니다.
+  <ul>
+   <li><b>물리적</b>(이온 충돌·스퍼터링) → <b>방향성(이방성)</b>을 만듦</li>
+   <li><b>화학적</b>(라디칼 반응) → <b>선택비와 식각 속도</b>를 만듦</li>
+  </ul>
+  <table>
+   <tr><th>방식</th><th>특징</th></tr>
+   <tr><td><b class="hi">RIE</b>(반응성 이온 식각)</td><td>가장 기본. 이방성 좋음</td></tr>
+   <tr><td><b>CCP</b>(용량결합)</td><td>평행판 전극, 이온 에너지 큼</td></tr>
+   <tr><td><b>ICP</b>(유도결합)</td><td>코일로 고밀도 플라즈마. <b>밀도와 이온에너지를 따로 제어</b></td></tr>
+  </table>
+  <b>가스</b>: 산화막에 CF₄·CHF₃, 실리콘에 SF₆·Cl₂, 금속에 Cl₂·BCl₃, 챔버 클리닝에 NF₃.`,
+  tip:'ICP가 좋은 이유 한 줄: <b>플라즈마 밀도(코일)와 이온 에너지(바이어스)를 따로 조절</b>할 수 있어 선택비와 이방성을 동시에 잡습니다.'},
+ {h:'종점검출과 애싱',lead:'언제 멈출지 어떻게 아나',
+  body:`<ul>
+   <li><b class="hi">EPD</b>(End Point Detection, 종점검출) — 정해진 깊이에서 멈추기 위한 장치
+     <ul><li><b>OES</b>(발광분광) — 플라즈마 <b>빛의 파장</b>이 바뀌는 순간 = 막이 뚫린 순간</li>
+     <li><b>간섭계</b> — 반사광의 간섭 무늬로 두께 변화를 봄</li></ul></li>
+   <li><b>오버에치</b> — 종점 후 조금 더 깎아 잔막을 없앰. 과하면 하부막 손상</li>
+   <li><b class="hi">애싱(Ashing)</b> — 식각이 끝난 뒤 <b>산소(O₂) 플라즈마</b>로 남은 PR을 태워 없앰. 그 뒤 습식 세정(스트립)</li>
+  </ul>`,
+  tip:'헷갈림 정리: <b>식각 = 막을 깎는 것</b>, <b>애싱 = 다 쓴 감광액을 태우는 것</b>. 애싱 가스는 <b>산소</b>입니다.'},
+ {h:'습식 식각과 안전',lead:'싸고 빠르지만 옆으로 판다',
+  body:`<ul>
+   <li><b>등방성</b> — 위·옆으로 똑같이 파여 <b>언더컷</b>. 미세 패턴에 부적합</li>
+   <li>배치(여러 장 동시) 처리라 <b>생산성은 좋음</b>. 웨트 벤치에서 진행</li>
+   <li>약품: 산화막 <b>HF·BOE</b>, 실리콘 <b>KOH·TMAH</b>, 질화막 <b>인산(H₃PO₄, 고온)</b>, 금속 혼산</li>
+   <li>웨트 벤치 보전: <b>약액 농도·온도 관리</b>, 순환 필터, 배기(음압), 누액 감지 센서</li>
+  </ul>`,
+  tip:'습식 식각 문제에서 <b>HF는 산화막(SiO₂)</b>과 짝입니다. 그리고 HF는 피부 접촉 시 <b>즉시 아프지 않다가</b> 뼈까지 침투하는 물질이라는 안전 포인트가 늘 붙어 나옵니다.'},
+]},
+
+/* ── 교재 Part 4 : 확산공정기술 ── */
+{id:'c13',icon:'🔥',title:'확산 · 이온주입 · 열처리',sub:'실리콘의 성질을 바꾸는 공정',cards:[
+ {h:'확산 — 뜨겁게 해서 스며들게 한다',lead:'예치 → 추진 2단계',
+  body:`고온(900~1200℃) 확산로에서 불순물이 <b>농도가 높은 곳에서 낮은 곳으로</b> 스며듭니다.
+  <ul>
+   <li><b class="hi">예치(Predeposition)</b> — 표면에 불순물을 <b>얇고 진하게</b> 얹는 단계. 농도를 결정</li>
+   <li><b class="hi">추진(Drive-in)</b> — 불순물 공급을 끊고 열만 주어 <b>깊이 밀어 넣는</b> 단계. 접합 깊이를 결정</li>
+   <li>온도가 높을수록·시간이 길수록 <b>깊고 넓게</b> 퍼집니다</li>
+  </ul>
+  <b>확산로(퍼니스)</b>: 수직형이 주류. 쿼츠 튜브 + 보트 + 존별 히터 + 열전대. <b>온도 균일도와 램프업/다운 속도</b> 관리가 핵심.`,
+  tip:'외우기: <b>예치 = 농도(얼마나 진하게), 추진 = 깊이(얼마나 깊게)</b>. 두 단어의 역할을 바꿔 묻는 문제가 나옵니다.'},
+ {h:'확산 vs 이온주입',lead:'왜 지금은 이온주입인가',
+  body:`<table>
+   <tr><th></th><th>확산</th><th>이온주입</th></tr>
+   <tr><td>제어</td><td>온도·시간 (거칠다)</td><td><b>도즈·에너지로 정밀 제어</b></td></tr>
+   <tr><td>방향</td><td><b>등방성</b> — 옆으로도 퍼짐</td><td>거의 수직, 측면 확산 적음</td></tr>
+   <tr><td>온도</td><td>고온 필수</td><td><b>상온에서 주입</b>(뒤에 어닐링)</td></tr>
+   <tr><td>얕은 접합</td><td>불리</td><td><b>유리 → 현재 주류</b></td></tr>
+   <tr><td>결정 손상</td><td>없음</td><td><b>있음 → 어닐링 필요</b></td></tr>
+  </table>`,
+  tip:'"미세 소자에서 확산 대신 이온주입을 쓰는 이유?" → <b>도핑 농도와 깊이를 정밀하게 제어</b>할 수 있고 <b>측면 확산이 적어</b> 얕은 접합을 만들 수 있기 때문입니다.'},
+ {h:'이온주입 장비의 구조',lead:'순서를 그대로 외운다',
+  body:`<b class="hi">이온 소스 → 질량분석기(분석 마그넷) → 가속관 → 스캐너 → 엔드스테이션(웨이퍼)</b>
+  <ul>
+   <li><b>이온 소스</b> — 원료 가스(BF₃, PH₃, AsH₃)를 이온화</li>
+   <li><b>질량분석기</b> — 자기장으로 휘게 해 <b>원하는 이온만 골라냄</b>(질량이 다르면 휘는 정도가 다름)</li>
+   <li><b>가속관</b> — keV~MeV로 가속. 에너지가 클수록 <b>깊이</b> 들어감</li>
+   <li><b>도즈(Dose)</b> = 단위면적당 주입된 이온 수(ions/cm²) → <b>농도</b>를 결정</li>
+   <li><b>채널링</b> — 결정 격자 사이 통로로 이온이 너무 깊이 박히는 현상. 웨이퍼를 <b>약 7° 기울여</b> 막음</li>
+   <li>장비 전체가 <b>고진공</b>이고, 고전압·<b>X선</b>이 발생해 차폐가 필요</li>
+  </ul>`,
+  tip:'두 숫자의 역할: <b>에너지 = 깊이</b>, <b>도즈 = 농도</b>. 이 한 줄이 시험에 그대로 나옵니다.'},
+ {h:'어닐링과 RTP',lead:'부순 결정을 되살리고 도펀트를 깨운다',
+  body:`이온을 박으면 결정이 깨지고, 박힌 도펀트는 아직 <b>전기적으로 일하지 않습니다</b>. 그래서 열처리를 합니다.
+  <ul>
+   <li><b>어닐링 목적</b> = ① <b>결정 결함 회복</b> ② <b>도펀트 활성화</b></li>
+   <li><b>퍼니스 어닐</b> — 수십 분~수 시간. 열이 오래 가해져 <b>도펀트가 더 퍼짐</b></li>
+   <li><b class="hi">RTP / RTA</b>(급속열처리) — 할로겐 램프로 <b>수 초 만에</b> 1000℃까지. 확산을 최소화하면서 활성화 → <b>얕은 접합에 필수</b></li>
+   <li>RTP 장비 보전: 램프 수명·출력 편차, <b>고온계(파이로미터) 교정</b>, 챔버 창(window) 오염, 온도 램프율</li>
+  </ul>`,
+  tip:'"급속열처리(RTP)를 쓰는 이유?" → <b>짧은 시간에 처리해 도펀트가 퍼지는 것(확산)을 최소화</b>하기 위해서입니다.'},
+]},
+
+/* ── 교재 Part 5 : CVD, PVD, ALD ── */
+{id:'c14',icon:'🧬',title:'증착 — CVD · PVD · ALD',sub:'막을 어떻게 올리느냐',cards:[
+ {h:'CVD — 가스를 반응시켜 막을 만든다',lead:'압력과 플라즈마로 나뉜다',
+  body:`<table>
+   <tr><th>종류</th><th>조건</th><th>특징</th></tr>
+   <tr><td>APCVD</td><td>대기압</td><td>빠르지만 균일도·품질 낮음</td></tr>
+   <tr><td><b class="hi">LPCVD</b></td><td>저압·고온</td><td><b>균일도·단차피복성 우수</b>, 배치 처리</td></tr>
+   <tr><td><b class="hi">PECVD</b></td><td>플라즈마 사용</td><td><b>저온에서 증착 가능</b> → 금속배선 위에도 OK</td></tr>
+   <tr><td>HDP-CVD</td><td>고밀도 플라즈마</td><td>증착과 식각을 동시에 → <b>좁은 틈 메우기(갭필)</b></td></tr>
+  </table>
+  <b>왜 LPCVD가 균일한가</b>: 압력을 낮추면 가스가 잘 퍼져(확산이 빨라져) 웨이퍼 구석까지 고르게 반응합니다.`,
+  tip:'배선(알루미늄) 위에 막을 올려야 할 때 <b>고온 LPCVD는 못 씁니다</b>(녹음). 그래서 <b>저온이 가능한 PECVD</b>를 쓴다 — 이 논리가 그대로 문제로 나옵니다.'},
+ {h:'PVD — 물리적으로 때려서 붙인다',lead:'증발과 스퍼터링',
+  body:`<ul>
+   <li><b>진공 증발(Evaporation)</b> — 금속을 가열해 증기로 만들어 붙임. 단순하지만 단차피복성 나쁨</li>
+   <li><b class="hi">스퍼터링(Sputtering)</b> — <b>아르곤 이온</b>으로 <b>타깃</b>을 때려 튀어나온 원자를 웨이퍼에 붙임
+     <ul>
+      <li><b>DC 스퍼터</b> = 금속 타깃 / <b>RF 스퍼터</b> = 절연체 타깃도 가능</li>
+      <li><b>마그네트론</b> — 자석으로 전자를 타깃 근처에 가둬 <b>증착 속도·효율↑</b></li>
+      <li>소모품 = <b>타깃</b>(침식되면 교체), 실드/키트(퇴적물 → 파티클 원인)</li>
+     </ul></li>
+  </ul>
+  주로 <b>금속 배선(Al, Ti, TiN, Cu 시드층)</b>에 사용합니다.`,
+  tip:'스퍼터링에 <b>아르곤(Ar)</b>을 쓰는 이유 = <b>불활성</b>이라 막과 반응하지 않고, 무거워 때리는 힘이 좋기 때문입니다.'},
+ {h:'ALD와 단차피복성',lead:'한 겹씩 쌓는다',
+  body:`<b class="hi">ALD</b>(원자층 증착)는 <b>전구체 주입 → 퍼지 → 반응체 주입 → 퍼지</b>를 한 사이클로 반복합니다.
+  <ul>
+   <li>표면이 한 겹 덮이면 반응이 스스로 멈춥니다(<b>자기제한 반응</b>) → 두께를 <b>사이클 수로</b> 정확히 제어</li>
+   <li>아주 얇고(옹스트롬 단위) 균일하며, <b>깊고 좁은 구멍 안까지 완벽하게</b> 덮임</li>
+   <li>단점: <b>느리다</b>(생산성이 낮음)</li>
+  </ul>
+  <b>단차피복성(Step Coverage) 순서</b>: <b class="hi">ALD > LPCVD > PECVD > PVD</b>`,
+  tip:'"종횡비가 매우 높은 구멍을 균일하게 덮어야 한다" → 답은 거의 항상 <b>ALD</b>입니다.'},
+ {h:'증착 장비의 보전 포인트',lead:'막이 챔버에도 쌓인다',
+  body:`증착 장비의 숙명 — <b>웨이퍼에만 쌓이는 게 아니라 챔버 벽에도 쌓입니다.</b> 이게 떨어지면 파티클입니다.
+  <ul>
+   <li><b class="hi">챔버 클리닝</b> — <b>NF₃ 등으로 플라즈마 클리닝</b>(원격 플라즈마 방식도 있음). 주기 관리가 곧 파티클 관리</li>
+   <li><b>소모품(키트) 교체</b> — 샤워헤드, 라이너, 실드, 서셉터/척</li>
+   <li><b>시즈닝(Seasoning)</b> — 클리닝 후 더미 웨이퍼로 막을 한 겹 입혀 <b>초기 공정 편차를 없앰</b></li>
+   <li>막 두께·균일도·<b>스트레스</b>(휨) 관리, 전구체 라인 히팅(응축 방지)</li>
+  </ul>`,
+  tip:'"PM(챔버 클리닝) 직후 첫 웨이퍼의 결과가 다르다" → 대책은 <b>시즈닝</b>입니다. 실무·시험 모두에서 나오는 개념입니다.'},
+]},
+
+/* ── 교재 Part 6 : 세정과 CMP ── */
+{id:'c15',icon:'🚿',title:'세정과 CMP',sub:'공정 사이사이 가장 자주 하는 일',cards:[
+ {h:'세정 — 팹에서 제일 많이 하는 공정',lead:'RCA 세정을 외운다',
+  body:`오염은 크게 <b>파티클 · 유기물 · 금속이온 · 자연산화막</b> 네 가지입니다. 각각 담당 약품이 다릅니다.
+  <table>
+   <tr><th>이름</th><th>조성</th><th>없애는 것</th></tr>
+   <tr><td><b class="hi">SC-1</b> (APM)</td><td>NH₄OH + H₂O₂ + H₂O</td><td><b>파티클 · 유기물</b></td></tr>
+   <tr><td><b class="hi">SC-2</b> (HPM)</td><td>HCl + H₂O₂ + H₂O</td><td><b>금속 이온</b></td></tr>
+   <tr><td>SPM (피라냐)</td><td>H₂SO₄ + H₂O₂</td><td>강한 유기물 · <b>PR 제거</b></td></tr>
+   <tr><td>DHF / BOE</td><td>희석 HF</td><td><b>자연산화막</b></td></tr>
+  </table>
+  <b>SC-1 + SC-2 = RCA 세정</b>. 각 단계 사이에는 반드시 <b>초순수(UPW) 린스</b>가 들어갑니다.`,
+  tip:'딱 두 줄만 확실히: <b>SC-1은 암모니아 계열 → 파티클/유기물</b>, <b>SC-2는 염산 계열 → 금속</b>. 이 짝을 바꿔 묻는 문제가 단골입니다.'},
+ {h:'세정 방식과 건조',lead:'배치식 vs 매엽식',
+  body:`<ul>
+   <li><b>배치식(Batch)</b> — 카세트째 여러 장을 한 번에. <b>생산성 좋음</b>, 약액 오염이 서로 옮을 수 있음</li>
+   <li><b class="hi">매엽식(Single Wafer)</b> — 한 장씩 돌리며 약액을 뿌림. <b>균일도·재현성 좋음</b> → 미세 공정의 주류</li>
+   <li><b>메가소닉</b> — 고주파 음파로 파티클을 털어냄(물리적 세정)</li>
+   <li><b>건식 세정</b> — O₂ 플라즈마 애싱, UV/오존. 약액 없이 유기물 제거</li>
+   <li><b>건조</b>가 의외로 중요 — 물자국(워터마크)이 곧 불량. <b>스핀 건조 · IPA 증기 건조 · 마란고니 건조</b></li>
+  </ul>`,
+  tip:'"세정은 잘했는데 <b>건조에서 얼룩</b>이 남는다" — 그래서 IPA(이소프로필알코올)로 물을 밀어내며 말립니다. 세정 = 씻기 + <b>말리기</b>까지입니다.'},
+ {h:'CMP — 갈아서 평평하게',lead:'화학 + 기계를 동시에',
+  body:`막을 계속 쌓으면 표면이 울퉁불퉁해지고, 그러면 <b>포토의 초점이 안 맞습니다</b>. 그래서 갈아서 평탄화합니다.
+  <ul>
+   <li><b>구성</b>: <b class="hi">플래튼 + 연마 패드</b>(아래) / <b>캐리어 헤드 + 리테이너 링</b>(웨이퍼를 눌러 잡음) / <b>슬러리 공급</b> / <b>컨디셔너</b>(다이아몬드 디스크)</li>
+   <li><b>슬러리</b> = 연마 입자(실리카·세리아·알루미나) + 화학 약품. <b>화학적으로 무르게 만든 뒤 기계적으로 깎음</b></li>
+   <li><b>제거율(MRR) ∝ 압력 × 상대속도</b> (프레스턴 식)</li>
+   <li><b>컨디셔닝</b> — 패드 표면이 눌려 막히므로 계속 긁어 되살림. 안 하면 제거율이 떨어짐</li>
+   <li><b>종점검출</b> — 모터 <b>전류(토크) 변화</b>나 광학 신호로</li>
+  </ul>`,
+  tip:'CMP의 M은 Mechanical(기계)만이 아닙니다. <b>C = Chemical</b>. "화학적으로 반응시켜 무르게 만든 층을 기계적으로 제거"가 정의입니다.'},
+ {h:'CMP 결함과 보전',lead:'끝나면 반드시 씻는다',
+  body:`<ul>
+   <li><b>스크래치</b> — 큰 입자나 굳은 슬러리가 긁음</li>
+   <li><b>디싱(Dishing)</b> — 넓은 금속 패턴 가운데가 접시처럼 움푹 패임</li>
+   <li><b>에로전(Erosion)</b> — 패턴이 촘촘한 영역이 통째로 더 깎임</li>
+   <li><b class="hi">CMP 후 세정(Post-CMP Clean)</b>은 필수 — 슬러리가 남으면 그대로 오염원. 브러시(PVA) 세정 + 메가소닉</li>
+   <li>보전 항목: <b>패드 수명·교체</b>, 컨디셔너 디스크 마모, 슬러리 배관 <b>막힘·굳음</b>, 헤드 압력 균일도, 폐슬러리 처리</li>
+  </ul>`,
+  tip:'CMP 장비는 <b>소모품 교체가 가장 잦은 장비</b> 중 하나입니다(패드·디스크·브러시). "예방보전 주기 관리" 예시로 딱 맞는 설비입니다.'},
+]},
+
+/* ── 교재 Part 7 : 반도체 조립공정기술 ── */
+{id:'c16',icon:'📦',title:'조립(패키징) 공정',sub:'교재 한 Part를 통째로 차지한다',cards:[
+ {h:'조립공정 전체 순서',lead:'이 순서를 통째로 외운다',
+  body:`<ol style="padding-left:20px;line-height:1.95">
+   <li><b class="hi">백그라인딩</b> — 웨이퍼 뒷면을 갈아 얇게(수백 → 수십 µm)</li>
+   <li><b>웨이퍼 마운팅</b> — 테이프·링 프레임에 붙임</li>
+   <li><b class="hi">다이싱(절단)</b> — 블레이드 / 레이저 / 스텔스 방식으로 칩 단위로 자름</li>
+   <li><b>다이 어태치(다이 본딩)</b> — 좋은 칩만 골라 리드프레임·기판에 붙임</li>
+   <li><b class="hi">와이어 본딩</b> — 칩의 패드와 리드를 <b>금·구리 가는 선</b>으로 연결</li>
+   <li><b>몰딩</b> — <b>EMC</b>(에폭시 몰딩 컴파운드)로 감싸 보호(트랜스퍼 몰딩)</li>
+   <li><b>마킹</b> — 레이저로 제품명·로트 표시</li>
+   <li><b>솔더볼 부착 / 싱귤레이션</b> — BGA 등 외부 단자 형성 후 낱개로 분리</li>
+   <li><b class="hi">최종 테스트(FT)</b> — 핸들러로 온도·전기 특성 검사, <b>번인</b>으로 초기불량 걸러냄</li>
+  </ol>`,
+  tip:'앞 단원과 연결: <b>EDS = 자르기 전(웨이퍼)</b>, <b>FT = 포장 뒤(완제품)</b>. 그 사이가 이 조립공정 전부입니다.'},
+ {h:'왜 이렇게까지 하나 — 패키지의 목적',lead:'네 가지',
+  body:`<ul>
+   <li><b>전기적 연결</b> — 칩의 미세 패드를 기판에 꽂을 수 있는 크기의 단자로 넓혀 줌</li>
+   <li><b>보호</b> — 습기·충격·오염으로부터</li>
+   <li><b>방열</b> — 칩에서 나는 열을 밖으로</li>
+   <li><b>규격화</b> — 누구나 쓸 수 있는 표준 모양으로</li>
+  </ul>
+  <table>
+   <tr><th>패키지</th><th>특징</th></tr>
+   <tr><td>DIP / QFP</td><td>리드(다리)가 밖으로 나온 전통형</td></tr>
+   <tr><td><b>BGA</b></td><td>바닥에 <b>솔더볼</b>을 배열 → 단자 수 많음</td></tr>
+   <tr><td>CSP / WLP</td><td>칩 크기에 가깝게 작게. WLP는 웨이퍼 상태에서 패키징</td></tr>
+   <tr><td><b>플립칩</b></td><td>칩을 <b>뒤집어 범프로 직접</b> 접합 — <b>와이어가 없어</b> 전기 특성·속도 유리</td></tr>
+   <tr><td>적층 / TSV</td><td>칩을 쌓고 관통 전극으로 연결(HBM 등)</td></tr>
+  </table>`,
+  tip:'"와이어 본딩을 쓰지 않는 방식은?" → <b>플립칩</b>. 범프(솔더 돌기)로 뒤집어 직접 붙입니다.'},
+ {h:'와이어 본딩과 몰딩의 속',lead:'열 · 압력 · 초음파',
+  body:`<ul>
+   <li><b>볼 본딩</b> — 선 끝을 녹여 공을 만들어 칩 패드에 붙이고, 반대쪽은 <b>스티치(웨지)</b>로 마감. 금선이 대표</li>
+   <li>붙이는 힘은 <b class="hi">열 + 압력 + 초음파</b> 세 가지의 조합</li>
+   <li>불량: <b>비접합(non-stick) · 넥 크랙 · 와이어 스윕</b>(몰딩 수지에 밀려 선이 쏠려 단락)</li>
+   <li><b>몰딩(EMC)</b> — 금형 온도·압력·시간 관리. 결함은 <b>보이드(기포) · 미충전 · 플래시</b></li>
+   <li>습기 관리 — 패키지가 물을 먹은 채 리플로우 열을 받으면 부풀어 터지는 <b>팝콘 현상</b>. 그래서 <b>베이킹·방습 포장(MSL)</b></li>
+  </ul>`,
+  tip:'<b>팝콘 현상</b>은 시험에도 현장에도 나옵니다. 원인은 <b>흡습</b>, 대책은 <b>건조 보관·베이킹</b>입니다.'},
+ {h:'조립 설비의 보전 포인트',lead:'정밀 기구와 소모품',
+  body:`<ul>
+   <li><b>다이싱 블레이드</b> — 마모·처핑(칩 가장자리 깨짐). 절삭수(DI water) 공급·드레싱 관리</li>
+   <li><b>본딩 캐필러리</b>(와이어를 통과시키는 노즐) — 막힘·마모 시 비접합 발생, 정기 교체</li>
+   <li><b>픽업 콜릿</b>·진공 노즐 — 진공 누설이면 칩을 놓침</li>
+   <li><b>비전(Vision) 정렬</b> — 조명·카메라 초점이 흐려지면 위치 불량</li>
+   <li><b>금형 청소</b> — 몰딩 금형에 수지가 눌어붙으면 플래시·미충전</li>
+   <li>전 공정 공통으로 <b>ESD 대책</b>(칩이 노출되어 있음)</li>
+  </ul>`,
+  tip:'조립 설비는 전공정 장비와 달리 <b>진공 챔버보다 기구·소모품 관리</b>가 중심입니다. 그래서 앞의 「기계요소와 정비 기초」 단원이 여기서 바로 쓰입니다.'},
 ]},
 
 {id:'c3',icon:'🧪',title:'장비 요소기술 — 진공·가스·온도',
@@ -750,6 +1038,17 @@ const CHAPTERS=[
 ];
 
 /* ─────────────────────────────────────────
+   출제 비중 — 실전 모의고사 60문항을 단원별로 몇 문항 낼지.
+   표준 기출문제집(10 Part) 구성을 따라 공정(사진·식각·확산·증착·세정CMP·조립)에
+   무게를 싣고, 직무모형에 있는 보전·자동화·안전을 같은 급으로 둔다. 합계 = 60.
+   [추가지점 4] 자료를 보고 비중을 조정하려면 이 숫자만 고치면 된다.
+   ───────────────────────────────────────── */
+const WEIGHT={
+  c1:3,  c2:2,  c11:5, c12:5, c13:5, c14:5, c15:5, c16:5,
+  c3:4,  c4:5,  c5:5,  c6:5,  c7:2,  c8:2,  c9:1,  c10:1
+};
+
+/* ─────────────────────────────────────────
    [추가지점 2] 게임 데이터
    ───────────────────────────────────────── */
 const STEPS=[
@@ -1073,6 +1372,149 @@ const BANK=[
 {c:'c10',q:'MTTR(평균수리시간)을 줄이는 데 가장 직접적으로 도움이 되는 것은?',
  o:['예비품(스페어) 확보와 표준 작업서 정비','고장 횟수를 세지 않는 것','장비를 더 오래 돌리는 것','점검 주기를 없애는 것'],a:0,
  e:'부품을 기다리는 시간이 수리시간의 대부분입니다. <b>예비품 확보·표준 작업서</b>가 MTTR을 직접 줄입니다.'},
+
+{c:'c1',q:'단결정 실리콘 잉곳을 만드는 대표적인 방법으로, 용융 실리콘에 씨앗 결정을 담가 회전시키며 끌어올리는 것은?',
+ o:['초크랄스키(CZ)법','플로팅존(FZ)법','스퍼터링','에피택시'],a:0,
+ e:'<b>CZ법</b>이 대구경 웨이퍼용 주류입니다. FZ법은 고순도·고저항용으로 소량 쓰입니다.'},
+{c:'c1',q:'웨이퍼 가장자리의 플랫존이나 노치의 역할은?',
+ o:['무게를 줄이기 위해','결정 방향과 도전형을 표시하고 정렬 기준으로 쓰기 위해','열을 방출하기 위해','손잡이로 쓰기 위해'],a:1,
+ e:'플랫존·노치는 <b>결정 방향 표시와 장비의 정렬 기준</b> 역할을 합니다.'},
+
+{c:'c11',q:'포토 공정에서 감광액의 밀착력을 높이기 위해 도포 전에 하는 표면 처리는?',
+ o:['HMDS 프라이밍','하드 베이크','현상','애싱'],a:0,
+ e:'<b>HMDS</b>로 표면을 소수성으로 바꿔 PR이 잘 달라붙게 합니다.'},
+{c:'c11',q:'스핀 코팅에서 감광액을 더 얇게 도포하려면?',
+ o:['회전수를 낮춘다','회전수를 높인다','온도를 낮춘다','웨이퍼를 크게 한다'],a:1,
+ e:'회전수가 <b>빠를수록 얇게</b> 도포됩니다.'},
+{c:'c11',q:'노광 광원의 파장이 짧아질수록 나타나는 현상은?',
+ o:['해상도가 나빠진다','더 미세한 패턴을 구현할 수 있다','초점심도가 무한대가 된다','감광액이 필요 없어진다'],a:1,
+ e:'해상도 R = k₁·λ/NA — <b>λ가 짧을수록 R이 작아져(=더 미세하게)</b> 구현됩니다.'},
+{c:'c11',q:'렌즈의 개구수(NA)를 크게 했을 때 함께 나타나는 단점은?',
+ o:['해상도가 나빠진다','초점심도(DOF)가 줄어든다','파장이 길어진다','마스크가 필요 없어진다'],a:1,
+ e:'DOF = k₂·λ/NA² — NA의 <b>제곱에 반비례</b>해 초점 여유가 급격히 줄어듭니다.'},
+{c:'c11',q:'양성(Positive) 감광액의 특징으로 옳은 것은?',
+ o:['빛을 받은 부분이 현상액에 녹아 없어진다','빛을 받은 부분이 남는다','현상이 필요 없다','해상도가 음성보다 나쁘다'],a:0,
+ e:'양성 PR은 <b>노광된 부분이 제거</b>되며 해상도가 좋아 현재 주류입니다.'},
+{c:'c11',q:'EUV 노광의 파장과 특징으로 옳은 것은?',
+ o:['193nm, 물을 채워 사용','13.5nm, 반사형 마스크와 진공 환경 필요','365nm, 수은 램프','248nm, 투과형 마스크'],a:1,
+ e:'EUV는 <b>13.5nm</b>이며 대부분의 물질에 흡수되어 <b>반사 광학계와 진공</b>이 필요합니다.'},
+{c:'c11',q:'마스크 표면에 얇은 보호막(펠리클)을 씌우는 이유는?',
+ o:['먼지를 초점면에서 벗어나게 하여 웨이퍼에 상이 맺히지 않게 하려고','마스크를 무겁게 하려고','빛을 완전히 차단하려고','정전기를 만들려고'],a:0,
+ e:'펠리클은 먼지를 <b>초점 밖으로 띄워</b> 패턴에 전사되지 않게 합니다.'},
+{c:'c11',q:'포토 공정이 다른 공정과 달리 갖는 큰 장점은?',
+ o:['불량 시 감광액만 제거하고 다시 작업(리워크)할 수 있다','진공이 필요 없다','상온에서만 진행된다','검사가 필요 없다'],a:0,
+ e:'식각·이온주입은 되돌릴 수 없지만 포토는 <b>리워크</b>가 가능합니다.'},
+{c:'c12',q:'식각에서 선택비(Selectivity)에 대한 설명으로 옳은 것은?',
+ o:['작을수록 좋다','목표막과 마스크(하부막)의 식각률 비이며 클수록 좋다','식각 속도와 같은 말이다','압력의 단위이다'],a:1,
+ e:'선택비가 <b>커야</b> 마스크나 하부막이 덜 깎여 원하는 막만 정확히 제거됩니다.'},
+{c:'c12',q:'식각에서 언더컷(측면 침식)이 발생하기 쉬운 경우는?',
+ o:['이방성 식각','등방성 식각','선택비가 높을 때','종횡비가 낮을 때'],a:1,
+ e:'<b>등방성</b>은 옆으로도 파여 언더컷이 생깁니다. 습식 식각이 대표적입니다.'},
+{c:'c12',q:'플라즈마 식각에서 방향성(이방성)을 주로 만들어 내는 작용은?',
+ o:['이온의 물리적 충돌','라디칼의 화학 반응','열 확산','중력'],a:0,
+ e:'<b>물리적 이온 충돌</b>이 방향성을, 화학 반응이 선택비와 속도를 담당합니다.'},
+{c:'c12',q:'플라즈마의 발광 파장 변화를 이용해 식각 종점을 검출하는 방법은?',
+ o:['OES(발광분광 분석)','절연저항 측정','토크 측정','pH 측정'],a:0,
+ e:'막이 뚫리면 반응 생성물이 바뀌어 <b>발광 스펙트럼</b>이 변합니다.'},
+{c:'c12',q:'식각이 끝난 뒤 남아 있는 감광액을 산소 플라즈마로 제거하는 공정은?',
+ o:['애싱(Ashing)','스퍼터링','어닐링','CMP'],a:0,
+ e:'<b>애싱</b>은 O₂ 플라즈마로 PR을 태워 없애는 공정입니다.'},
+{c:'c12',q:'유도결합 플라즈마(ICP) 방식의 장점으로 옳은 것은?',
+ o:['플라즈마 밀도와 이온 에너지를 독립적으로 제어할 수 있다','진공이 필요 없다','상온 대기압에서 동작한다','가스를 쓰지 않는다'],a:0,
+ e:'코일(밀도)과 바이어스(이온 에너지)를 <b>따로</b> 조절할 수 있는 것이 ICP의 핵심 장점입니다.'},
+{c:'c12',q:'실리콘 산화막(SiO₂)의 습식 식각에 주로 사용되는 약품은?',
+ o:['HF(불산) 또는 BOE','KOH','황산 단독','메탄올'],a:0,
+ e:'산화막에는 <b>HF/BOE</b>를 씁니다. 실리콘 자체에는 KOH·TMAH를 사용합니다.'},
+{c:'c13',q:'확산 공정의 2단계 중, 불순물 공급을 끊고 열만 가해 접합 깊이를 결정하는 단계는?',
+ o:['예치(Predeposition)','추진(Drive-in)','현상','애싱'],a:1,
+ e:'<b>예치 = 농도</b>, <b>추진 = 깊이</b>를 결정합니다.'},
+{c:'c13',q:'이온주입 장비에서 원하는 이온만 선별해 내는 장치는?',
+ o:['질량분석기(분석 마그넷)','스크러버','칠러','로드락'],a:0,
+ e:'자기장 속에서 <b>질량이 다른 이온은 휘는 정도가 다르다</b>는 원리를 이용합니다.'},
+{c:'c13',q:'이온주입에서 도즈(Dose)와 에너지가 각각 결정하는 것은?',
+ o:['도즈=깊이, 에너지=농도','도즈=농도, 에너지=깊이','둘 다 온도를 결정','둘 다 압력을 결정'],a:1,
+ e:'<b>도즈 = 농도(얼마나 많이), 에너지 = 깊이(얼마나 깊이)</b>입니다.'},
+{c:'c13',q:'이온주입 시 이온이 결정 격자 사이로 지나치게 깊이 박히는 채널링을 막는 방법은?',
+ o:['웨이퍼를 약 7° 기울여 주입한다','에너지를 0으로 한다','대기압에서 주입한다','도즈를 무한히 늘린다'],a:0,
+ e:'웨이퍼를 <b>기울여</b> 격자 통로를 막는 것이 일반적인 채널링 방지법입니다.'},
+{c:'c13',q:'이온주입 후 열처리(어닐링)를 하는 목적으로 옳은 것은?',
+ o:['결정 결함 회복과 도펀트 활성화','산화막 성장','감광액 도포','금속 배선 형성'],a:0,
+ e:'이온 충돌로 깨진 결정을 되살리고, 도펀트가 전기적으로 동작하도록 <b>활성화</b>합니다.'},
+{c:'c13',q:'급속열처리(RTP/RTA)를 사용하는 가장 큰 이유는?',
+ o:['짧은 시간 처리로 도펀트의 추가 확산을 최소화하기 위해','전력을 아끼기 위해','진공이 필요 없어서','약품을 쓰지 않아서'],a:0,
+ e:'수 초 단위로 처리해 <b>얕은 접합</b>을 유지하면서 활성화할 수 있습니다.'},
+{c:'c13',q:'확산 공정과 비교한 이온주입의 장점이 아닌 것은?',
+ o:['도핑 농도와 깊이를 정밀하게 제어','측면 확산이 적음','상온에서 주입 가능','결정 손상이 전혀 없음'],a:3,
+ e:'이온주입은 <b>결정 손상이 생기므로 어닐링이 필요</b>합니다.'},
+{c:'c14',q:'금속 배선 위에 절연막을 올릴 때 고온 LPCVD 대신 PECVD를 쓰는 이유는?',
+ o:['PECVD가 저온에서 증착할 수 있어서','PECVD가 더 비싸서','LPCVD가 진공을 못 써서','PECVD가 대기압이라서'],a:0,
+ e:'플라즈마 에너지를 쓰므로 <b>저온 증착</b>이 가능해 금속(알루미늄) 위에도 올릴 수 있습니다.'},
+{c:'c14',q:'단차피복성(Step Coverage)이 가장 우수한 증착 방법은?',
+ o:['PVD(스퍼터링)','PECVD','LPCVD','ALD'],a:3,
+ e:'<b>ALD > LPCVD > PECVD > PVD</b> 순입니다. ALD는 깊은 구멍 안까지 균일합니다.'},
+{c:'c14',q:'ALD가 두께를 정확히 제어할 수 있는 원리는?',
+ o:['표면이 한 층 덮이면 반응이 스스로 멈추는 자기제한 반응','고온에서 빠르게 반응해서','플라즈마 밀도가 높아서','대기압에서 진행해서'],a:0,
+ e:'<b>자기제한(self-limiting)</b> 반응이라 사이클 수로 두께가 결정됩니다.'},
+{c:'c14',q:'스퍼터링에서 아르곤(Ar) 가스를 사용하는 이유로 옳은 것은?',
+ o:['불활성이라 막과 반응하지 않고 질량이 커서 타깃을 잘 때리기 때문','가장 값이 비싸서','폭발성이 있어서','물에 잘 녹아서'],a:0,
+ e:'Ar은 <b>불활성 + 적당히 무거움</b>이라 스퍼터링에 적합합니다.'},
+{c:'c14',q:'마그네트론 스퍼터링에서 자석을 사용하는 목적은?',
+ o:['전자를 타깃 주변에 가두어 플라즈마 밀도와 증착 속도를 높이기 위해','웨이퍼를 고정하기 위해','진공을 만들기 위해','냉각하기 위해'],a:0,
+ e:'자기장으로 전자를 가두면 이온화가 활발해져 <b>증착 효율</b>이 크게 올라갑니다.'},
+{c:'c14',q:'증착 챔버 클리닝(PM) 직후 첫 공정 결과가 평소와 달라지는 것을 막기 위해 하는 작업은?',
+ o:['시즈닝(Seasoning)','애싱','현상','다이싱'],a:0,
+ e:'더미 웨이퍼로 챔버 내벽에 막을 한 겹 입혀 <b>초기 편차를 없애는</b> 작업이 시즈닝입니다.'},
+{c:'c14',q:'증착 장비에서 파티클이 늘어나는 가장 근본적인 이유는?',
+ o:['챔버 내벽에 쌓인 퇴적물이 박리되기 때문','전압이 낮기 때문','웨이퍼가 크기 때문','냉각수 온도가 높기 때문'],a:0,
+ e:'그래서 <b>클리닝 주기와 소모품(샤워헤드·라이너) 교체</b>가 파티클 관리의 핵심입니다.'},
+{c:'c15',q:'RCA 세정에서 SC-1(NH₄OH+H₂O₂+H₂O)이 주로 제거하는 오염은?',
+ o:['파티클과 유기물','금속 이온','자연 산화막','수분'],a:0,
+ e:'<b>SC-1 = 파티클·유기물</b>, <b>SC-2(HCl 계열) = 금속 이온</b>입니다.'},
+{c:'c15',q:'금속 이온 오염을 제거하는 세정액은?',
+ o:['SC-1(APM)','SC-2(HPM)','DHF','IPA'],a:1,
+ e:'염산 계열의 <b>SC-2</b>가 금속 이온을 제거합니다.'},
+{c:'c15',q:'웨이퍼 표면의 자연 산화막을 제거할 때 사용하는 약액은?',
+ o:['희석 불산(DHF)','암모니아수','아세톤','초순수'],a:0,
+ e:'<b>DHF/BOE</b>가 자연 산화막(native oxide)을 제거합니다.'},
+{c:'c15',q:'세정 후 건조 단계에서 물자국(워터마크)을 줄이기 위해 사용하는 방법은?',
+ o:['IPA 증기 건조','상온 방치','물에 다시 담그기','플라즈마 식각'],a:0,
+ e:'<b>IPA(이소프로필알코올) 증기·마란고니 건조</b>로 물을 밀어내며 말립니다.'},
+{c:'c15',q:'매엽식(Single Wafer) 세정이 배치식보다 유리한 점은?',
+ o:['균일도와 재현성이 좋고 오염이 서로 옮지 않는다','한 번에 더 많이 처리한다','약액을 쓰지 않는다','건조가 필요 없다'],a:0,
+ e:'배치식은 생산성이, <b>매엽식은 균일도·재현성</b>이 강점입니다.'},
+{c:'c15',q:'CMP 공정에서 연마 패드 표면을 다이아몬드 디스크로 계속 긁어 되살리는 작업은?',
+ o:['컨디셔닝','시즈닝','어닐링','디싱'],a:0,
+ e:'<b>컨디셔닝</b>을 하지 않으면 패드가 막혀 제거율이 떨어집니다.'},
+{c:'c15',q:'CMP의 제거율(MRR)에 대한 프레스턴 식의 설명으로 옳은 것은?',
+ o:['압력과 상대속도에 비례한다','압력에 반비례한다','속도와 무관하다','온도에만 비례한다'],a:0,
+ e:'MRR ∝ <b>압력 × 상대속도</b>입니다.'},
+{c:'c15',q:'CMP 후 반드시 세정을 하는 이유는?',
+ o:['잔류 슬러리가 그대로 오염원이 되기 때문','표면을 다시 거칠게 하려고','두께를 늘리려고','온도를 낮추려고'],a:0,
+ e:'슬러리 입자가 남으면 스크래치·오염을 일으키므로 <b>Post-CMP 세정</b>이 필수입니다.'},
+{c:'c16',q:'조립(패키징) 공정에서 웨이퍼 뒷면을 갈아 두께를 줄이는 공정은?',
+ o:['백그라인딩','다이싱','몰딩','마킹'],a:0,
+ e:'<b>백그라인딩</b>으로 웨이퍼를 얇게 만든 뒤 다이싱으로 자릅니다.'},
+{c:'c16',q:'조립공정의 순서로 옳은 것은?',
+ o:['다이싱 → 백그라인딩 → 몰딩 → 와이어본딩','백그라인딩 → 다이싱 → 다이본딩 → 와이어본딩 → 몰딩','몰딩 → 다이싱 → 백그라인딩 → 마킹','와이어본딩 → 다이싱 → 백그라인딩 → 몰딩'],a:1,
+ e:'백그라인딩 → 다이싱 → 다이 어태치 → 와이어 본딩 → 몰딩 → 마킹 → 솔더볼 → 최종 테스트 순입니다.'},
+{c:'c16',q:'칩의 패드와 리드프레임을 가는 금속선으로 연결하는 공정은?',
+ o:['와이어 본딩','백그라인딩','싱귤레이션','애싱'],a:0,
+ e:'<b>와이어 본딩</b>은 열·압력·초음파를 함께 사용해 접합합니다.'},
+{c:'c16',q:'와이어를 사용하지 않고 칩을 뒤집어 범프로 기판에 직접 접합하는 방식은?',
+ o:['플립칩','DIP','QFP','와이어 본딩'],a:0,
+ e:'<b>플립칩</b>은 와이어가 없어 신호 경로가 짧고 전기 특성이 우수합니다.'},
+{c:'c16',q:'패키지 바닥에 솔더볼을 배열하여 많은 단자를 확보한 패키지는?',
+ o:['BGA','DIP','SOP','TO-220'],a:0,
+ e:'<b>BGA</b>(Ball Grid Array)입니다.'},
+{c:'c16',q:'흡습된 패키지가 리플로우 열을 받아 내부 수분이 팽창하며 터지는 현상은?',
+ o:['팝콘 현상','디싱','언더컷','채널링'],a:0,
+ e:'<b>팝콘 현상</b>이며, 대책은 방습 포장(MSL)과 <b>베이킹</b>입니다.'},
+{c:'c16',q:'칩을 감싸 습기·충격으로부터 보호하는 에폭시 수지 성형 공정은?',
+ o:['몰딩','현상','스퍼터링','린스'],a:0,
+ e:'<b>몰딩</b>이며 EMC(에폭시 몰딩 컴파운드)를 사용합니다. 결함은 보이드·미충전·플래시입니다.'},
+{c:'c16',q:'패키지의 주된 기능으로 보기 어려운 것은?',
+ o:['전기적 연결','외부 환경으로부터 보호','방열','회로 패턴 노광'],a:3,
+ e:'노광은 전공정(포토)의 일입니다. 패키지는 연결·보호·방열·규격화를 담당합니다.'},
 ];
 
 /* =========================================================
@@ -1093,7 +1535,7 @@ function show(id){SCREENS.forEach(s=>$(s).classList.toggle('hidden',s!==id));win
 function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('footin').innerHTML='';return;}
   f.classList.remove('hidden');$('footin').innerHTML=html;}
 $('btnHome').onclick=goHome;
-function goHome(){show('scHome');foot('');renderHome();}
+function goHome(){stopTimer();show('scHome');foot('');renderHome();}
 
 /* =========================================================
    홈
@@ -1101,11 +1543,16 @@ function goHome(){show('scHome');foot('');renderHome();}
 function renderFab(){
   const el=$('fabline');const done=CHAPTERS.filter(c=>learned[c.id]).length;
   const n=CHAPTERS.length;
+  // 단원이 많아지면 좁은 화면에서 스테이션이 겹친다 → 칸 간격에 맞춰 크기를 줄인다
+  const step=el.clientWidth*0.96/n;
+  const box=Math.max(13,Math.min(26,Math.floor(step)-5));
+  const showNum=step>=20;
+  el.style.setProperty('--sbox',box+'px');
   let h='<div class="rail"></div><div class="railfill" id="railfill"></div>';
   CHAPTERS.forEach((c,i)=>{
     const x=2+ (96*(i+.5)/n);
-    h+=`<div class="stn ${learned[c.id]?'on':''}" style="left:${x}%">
-        <div class="stnbox">${c.icon}</div><div class="sl">${i+1}</div></div>`;
+    h+=`<div class="stn ${learned[c.id]?'on':''}" style="left:${x}%;width:${Math.floor(step)}px">
+        <div class="stnbox">${c.icon}</div>${showNum?`<div class="sl">${i+1}</div>`:''}</div>`;
   });
   // 웨이퍼는 마지막으로 끝낸 단원 위에 선다 (하나도 안 끝냈으면 라인 시작점)
   const wx = done===0 ? 3 : 2 + 96*(done-0.5)/n;
@@ -1129,16 +1576,16 @@ function renderHome(){
     b.onclick=()=>startLearn(i);
     list.appendChild(b);
   });
-  [['g1','8대 공정'],['g2','진단'],['g3','계산'],['test','테스트']].forEach(([k])=>{
+  ['g1','g2','g3','test','mock'].forEach(k=>{
     const p=$('p_'+k);if(!p)return;
-    p.textContent = best[k]!=null ? `최고 ${best[k]}${k==='test'?'점':''}` : '–';
+    p.textContent = best[k]!=null ? `최고 ${best[k]}${(k==='test'||k==='mock')?'점':''}` : '–';
     if(best[k]!=null){p.style.color='var(--gold)';p.style.borderColor='var(--gold)';}
   });
 }
 document.querySelectorAll('[data-go]').forEach(b=>{
   b.onclick=()=>{const g=b.dataset.go;
     if(g==='g1')startOrder(); else if(g==='g2')startDiag();
-    else if(g==='g3')startCalc(); else startTest();};
+    else if(g==='g3')startCalc(); else if(g==='mock')startMock(); else startTest();};
 });
 
 /* =========================================================
@@ -1173,9 +1620,37 @@ function renderLearn(){
    문제 화면 공통 엔진
    ========================================================= */
 let g={mode:null,items:[],i:0,correct:0,wrong:[],t0:0,answered:false};
+let timerId=null,deadline=0;
+const MOCK_MIN=60;   // 실전 모의고사 제한시간(분) — 실제 필기와 동일
+
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function paintTimer(){
+  const el=$('mocktimer');if(!el)return;
+  const left=Math.max(0,Math.round((deadline-Date.now())/1000));
+  const m=Math.floor(left/60),s=left%60;
+  el.textContent=`⏱ 남은 시간 ${m}:${String(s).padStart(2,'0')}`;
+  el.style.color = left<=300 ? 'var(--bad)' : 'var(--dim)';
+  if(left<=0)timeUp();
+}
+function timeUp(){
+  stopTimer();
+  // 못 푼 문항은 오답 처리 (실제 시험과 같게)
+  for(let i=(g.answered?g.i+1:g.i);i<g.items.length;i++){
+    const it=g.items[i];
+    g.wrong.push({n:i+1,q:it.q,a:it.o[it.a],e:'⏰ 시간 안에 풀지 못한 문항입니다. '+it.e});
+  }
+  g.i=g.items.length;finish();
+}
 function beginQuiz(mode,items){
+  stopTimer();
   g={mode,items,i:0,correct:0,wrong:[],t0:Date.now(),answered:false};
-  if(window.FX){FX.reset();$('hud').innerHTML='';FX.hud($('hud'));}
+  $('hud').innerHTML='';
+  if(mode==='mock'){
+    const t=document.createElement('div');t.id='mocktimer';t.className='mocktimer';$('hud').appendChild(t);
+    deadline=Date.now()+MOCK_MIN*60*1000;paintTimer();
+    timerId=setInterval(paintTimer,1000);
+  }
+  if(window.FX){FX.reset();const h=document.createElement('div');$('hud').appendChild(h);FX.hud(h);}
   show('scQuiz');foot('');nextQ();
 }
 function nextQ(){
@@ -1188,7 +1663,7 @@ function nextQ(){
 function renderMCQ(){
   const it=g.items[g.i];
   $('qcard').innerHTML=`
-    <div class="qhead"><span>${g.mode==='test'?'🎯 종합 테스트':'🚨 이상 진단'} ${g.i+1} / ${g.items.length}</span>
+    <div class="qhead"><span>${g.mode==='test'?'🎯 빠른 점검':g.mode==='mock'?'🏁 실전 모의고사':'🚨 이상 진단'} ${g.i+1} / ${g.items.length}</span>
       <span>맞은 개수 ${g.correct}</span></div>
     <div class="qtext">${it.q||it.s}</div>
     <div id="opts"></div><div id="expwrap"></div>`;
@@ -1322,24 +1797,41 @@ function submitCalc(){
   $('qnext').onclick=()=>{g.i++;nextQ();};
 }
 
-/* ── 테스트 ── */
-function startTest(){
+/* ── 테스트 ──
+   WEIGHT(출제 비중)대로 단원별 문항 수를 정해 뽑는다. 어떤 단원도 0문항이 되지 않게
+   최소 1문항을 보장하고, 넘치면 가장 많이 뽑힌 단원부터 하나씩 덜어 총 문항 수를 맞춘다. */
+function pickWeighted(total){
   const byCh={};BANK.forEach(q=>{(byCh[q.c]=byCh[q.c]||[]).push(q);});
-  // 단원이 10개이므로 단원마다 2문항씩 = 20문항. 모자라는 단원은 아래에서 채운다
+  const W=CHAPTERS.reduce((s,c)=>s+(WEIGHT[c.id]||1),0);
   let picked=[];
-  Object.keys(byCh).forEach(k=>{picked=picked.concat(shuffle(byCh[k]).slice(0,2));});
-  const rest=shuffle(BANK.filter(q=>!picked.includes(q)));
-  while(picked.length<20&&rest.length)picked.push(rest.pop());
-  beginQuiz('test',shuffle(picked).slice(0,20).map(q=>{
+  CHAPTERS.forEach(c=>{
+    const pool=byCh[c.id]||[];if(!pool.length)return;
+    const want=Math.min(pool.length,Math.max(1,Math.round(total*(WEIGHT[c.id]||1)/W)));
+    picked=picked.concat(shuffle(pool).slice(0,want));
+  });
+  while(picked.length>total){
+    const cnt={};picked.forEach(q=>cnt[q.c]=(cnt[q.c]||0)+1);
+    const fat=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
+    picked.splice(picked.map(q=>q.c).lastIndexOf(fat),1);
+  }
+  if(picked.length<total){
+    const rest=shuffle(BANK.filter(q=>picked.indexOf(q)<0));
+    while(picked.length<total&&rest.length)picked.push(rest.pop());
+  }
+  return shuffle(picked).map(q=>{
     const ans=q.o[q.a],opts=shuffle(q.o);
     return {q:q.q,o:opts,a:opts.indexOf(ans),e:q.e};
-  }));
+  });
 }
+function startTest(){beginQuiz('test',pickWeighted(20));}
+function startMock(){beginQuiz('mock',pickWeighted(60));}
 
 /* =========================================================
    결과
    ========================================================= */
 function finish(){
+  stopTimer();
+  const scored = g.mode==='test'||g.mode==='mock';   // 100점 만점으로 환산하는 모드
   const total = g.mode==='order' ? STEPS.length : g.items.length;
   // 순서 게임은 결국 8칸을 다 채우므로, "한 번에 맞힌 자리 수"를 점수로 본다
   const correct = g.mode==='order'
@@ -1347,14 +1839,14 @@ function finish(){
     : g.correct;
   const dur=Math.round((Date.now()-g.t0)/1000);
   const pct=total?Math.round(correct/total*100):0;
-  const score = g.mode==='test' ? Math.round(correct/total*100) : correct;
+  const score = scored ? Math.round(correct/total*100) : correct;
 
   show('scResult');foot('');
   $('resScore').textContent='0';
   $('resScore').style.color = pct>=80?'var(--good)':pct>=60?'var(--gold)':'var(--bad)';
   $('resSub').textContent = (g.mode==='order'
       ? `${total}자리 중 ${correct}자리를 한 번에 성공 (${pct}%)`
-      : `${g.mode==='test'?'100점 만점':'총 '+total+'문제'} · ${correct}/${total} 정답 (${pct}%)`)
+      : `${scored?'100점 만점':'총 '+total+'문제'} · ${correct}/${total} 정답 (${pct}%)`)
     + ` · ${Math.floor(dur/60)}분 ${dur%60}초`;
 
   // 순차 판정 연출
@@ -1368,8 +1860,8 @@ function finish(){
   },90+i*55));
 
   setTimeout(()=>{
-    if(window.FX)FX.countUp($('resScore'),g.mode==='test'?score:correct);
-    else $('resScore').textContent=(g.mode==='test'?score:correct);
+    if(window.FX)FX.countUp($('resScore'),scored?score:correct);
+    else $('resScore').textContent=(scored?score:correct);
   },90+total*55);
 
   const mistakes=g.wrong.length;
@@ -1381,8 +1873,8 @@ function finish(){
   },400+total*55);
 
   // 최고기록
-  const key=({test:'test',order:'g1',diag:'g2',calc:'g3'})[g.mode];
-  const v=g.mode==='test'?score:correct;
+  const key=({test:'test',mock:'mock',order:'g1',diag:'g2',calc:'g3'})[g.mode];
+  const v=scored?score:correct;
   if(key&&(best[key]==null||v>best[key])){best[key]=v;store.set('best',best);}
 
   // 오답노트
@@ -1396,14 +1888,14 @@ function finish(){
   }
 
   $('resRetry').onclick=()=>{
-    ({test:startTest,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
+    ({test:startTest,mock:startMock,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
   };
   $('resHome').onclick=goHome;
 
   // 결과 제출(?rc= 링크로 열었을 때만)
   const sb=$('resSubmit');
   const hasRC=(window.ResultCollector&&ResultCollector.config&&ResultCollector.config.endpoint)||/[?&]rc=/.test(location.search);
-  sb.style.display = (hasRC && g.mode==='test') ? 'block' : 'none';
+  sb.style.display = (hasRC && scored) ? 'block' : 'none';
   sb.onclick=()=>{
     if(window.ResultCollector){
       ResultCollector.open({score,correct,total,wrong:g.wrong.map(x=>x.n),durationSec:dur,
