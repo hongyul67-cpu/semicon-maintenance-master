@@ -12,6 +12,8 @@
 <script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>
 <!-- 기출문제 데이터 -->
 <script src="exams.js"></script>
+<!-- 수업 슬라이드 -->
+<script src="lesson.js"></script>
 <style>
 :root{
   --bg:#0c1017; --panel:#161c27; --panel2:#1e2634; --line:#2c3648;
@@ -182,6 +184,39 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .witem:first-of-type{border-top:none}
 .witem b{color:#ffb3ba}
 
+/* ── 수업 슬라이드 ── */
+#scLesson{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,#0d1420,#080b11);
+  display:flex;flex-direction:column;padding:0}
+#scLesson.hidden{display:none!important}
+.ls-top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);
+  background:rgba(10,14,20,.9)}
+.ls-title{font-size:clamp(17px,2.4vw,26px);font-weight:800;letter-spacing:-.4px;flex:1;line-height:1.25}
+.ls-idx{font-size:13px;color:var(--dim);font-weight:700;white-space:nowrap}
+.ls-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;
+  display:flex;flex-direction:column;gap:12px}
+.ls-fig{background:#fff;border-radius:14px;padding:8px;text-align:center;flex-shrink:0}
+.ls-fig img{max-width:100%;max-height:min(42vh,420px);height:auto;display:block;margin:0 auto}
+.ls-cap{font-size:clamp(11.5px,1.4vw,14px);color:var(--dim);text-align:center;margin-top:5px}
+.ls-pts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px}
+.ls-pts li{font-size:clamp(14px,1.8vw,20px);line-height:1.6;background:var(--panel);
+  border:1px solid var(--line);border-left:3px solid var(--si);border-radius:10px;padding:9px 13px}
+.ls-ask{background:#1a1408;border:1px solid #4a3a12;border-left:3px solid var(--gold);border-radius:12px;
+  padding:12px 14px;font-size:clamp(14px,1.9vw,21px);line-height:1.6;color:#f4e6bd;font-weight:700}
+.ls-quiz{background:#101a26;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.ls-quiz .qq{font-size:clamp(14px,1.8vw,20px);font-weight:800;line-height:1.5;margin-bottom:9px}
+.ls-quiz .qo{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);
+  border-radius:10px;padding:10px 13px;margin-bottom:7px;font-size:clamp(13.5px,1.6vw,18px);line-height:1.45}
+.ls-quiz .qo.ok{background:rgba(58,217,149,.18);border-color:var(--good)}
+.ls-quiz .qo.dim{opacity:.42}
+.veil{visibility:hidden}
+.ls-bar{display:flex;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(10,14,20,.94)}
+.ls-bar button{min-height:52px;border-radius:13px;font-size:15px;font-weight:800;
+  background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:0 16px}
+.ls-bar .wide{flex:1;background:linear-gradient(180deg,var(--si2),#2472c8);border:0;color:#fff}
+.ls-bar .gold{background:linear-gradient(180deg,#caa14a,#a37c26);border:0;color:#1b1403}
+@media (max-width:520px){ .ls-bar button{padding:0 11px;font-size:14px} .ls-top{padding:9px 12px} }
+
 /* ── 하단 고정 ── */
 .footbar{position:fixed;left:0;right:0;bottom:0;z-index:45;background:rgba(12,16,23,.94);
   backdrop-filter:blur(8px);border-top:1px solid var(--line);padding:9px 13px}
@@ -244,6 +279,11 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
     <div class="bd">실제 필기와 같은 <b>60문항 · 60분 · 60점 합격</b>. 출제 비중대로 단원별 문항 수를 배분합니다.
     시간이 끝나면 남은 문항은 오답 처리됩니다.</div></button>
 
+  <div class="sect">🎓 수업용 · 교사가 앞에서 진행</div>
+  <button class="big" data-go="lesson"><div class="bt">🎓 수업 슬라이드 <span class="pill" id="p_lesson">9장</span></div>
+    <div class="bd">교재 도해를 그대로 띄우고 요점 → <b>발문</b> → 즉석 퀴즈로 진행합니다.
+    큰 글씨·좌우 스와이프·리모컨(PageUp/Down) 지원.</div></button>
+
   <div class="sect">📜 4단계 · 기출문제 풀어보기</div>
   <div id="examList"></div>
 
@@ -285,6 +325,22 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 </section>
 
 </div><!-- /wrap -->
+
+<!-- ══════════ 수업 슬라이드 ══════════ -->
+<section id="scLesson" class="hidden">
+  <div class="ls-top">
+    <div class="ls-title" id="lsTitle"></div>
+    <div class="ls-idx" id="lsIdx"></div>
+    <button class="tbtn" id="lsFull">⛶ 전체화면</button>
+    <button class="tbtn" id="lsClose">✕ 닫기</button>
+  </div>
+  <div class="ls-body" id="lsBody"></div>
+  <div class="ls-bar">
+    <button id="lsPrev">← 이전</button>
+    <button class="gold" id="lsReveal">💭 발문 열기</button>
+    <button class="wide" id="lsNext">다음 →</button>
+  </div>
+</section>
 
 <div class="footbar hidden" id="footbar"><div class="footin" id="footin"></div></div>
 
@@ -1620,7 +1676,8 @@ function renderHome(){
 document.querySelectorAll('[data-go]').forEach(b=>{
   b.onclick=()=>{const g=b.dataset.go;
     if(g==='g1')startOrder(); else if(g==='g2')startDiag();
-    else if(g==='g3')startCalc(); else if(g==='mock')startMock(); else startTest();};
+    else if(g==='g3')startCalc(); else if(g==='mock')startMock();
+    else if(g==='lesson')openLesson(); else startTest();};
 });
 
 /* =========================================================
@@ -1947,6 +2004,74 @@ function finish(){
     }else{alert('제출 기능은 선생님이 배포한 링크(?rc=...)로 열었을 때 작동합니다.');}
   };
 }
+
+/* =========================================================
+   수업 슬라이드 — 교사가 앞에서 끌고 가는 화면
+   단계: 0 요점만 → 1 발문 공개 → 2 퀴즈 공개 → 3 정답 공개
+   ========================================================= */
+let ls={i:0,step:0};
+function openLesson(){ls={i:0,step:0};$('scLesson').classList.remove('hidden');
+  document.body.style.overflow='hidden';renderLesson();}
+function closeLesson(){$('scLesson').classList.add('hidden');document.body.style.overflow='';
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+function renderLesson(){
+  const L=window.LESSON||[],s=L[ls.i];if(!s)return;
+  $('lsTitle').textContent=s.t;
+  $('lsIdx').textContent=`${ls.i+1} / ${L.length}`;
+  $('lsBody').innerHTML=`
+    ${s.img?`<div class="ls-fig"><img src="img/${s.img}" alt="${esc(s.t)}"></div>`:''}
+    ${s.cap?`<div class="ls-cap">${s.cap}</div>`:''}
+    <ul class="ls-pts">${s.pts.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="ls-ask ${ls.step<1?'veil':''}">💭 ${s.ask}</div>
+    <div class="ls-quiz ${ls.step<2?'veil':''}">
+      <div class="qq">🎯 ${s.ansq}</div>
+      <div id="lsOpts"></div>
+      <div class="exp ${ls.step<3?'veil':''}">${s.anse}</div>
+    </div>`;
+  const ow=$('lsOpts');
+  s.anso.forEach((o,idx)=>{
+    const b=document.createElement('button');b.className='qo'+(ls.step>=3?(idx===s.ansa?' ok':' dim'):'');
+    b.innerHTML=`<b style="color:var(--dim);margin-right:7px">${idx+1}</b>${o}`;
+    b.onclick=()=>{if(ls.step<3){ls.step=3;renderLesson();}};
+    ow.appendChild(b);
+  });
+  $('lsPrev').disabled = (ls.i===0 && ls.step===0);
+  $('lsReveal').textContent = ['💭 발문 열기','🎯 퀴즈 내기','✅ 정답 공개','✔ 모두 공개됨'][ls.step];
+  $('lsReveal').disabled = ls.step>=3;
+  $('lsNext').textContent = ls.i>=L.length-1 ? '수업 끝 ✓' : '다음 →';
+  $('lsBody').scrollTop=0;
+}
+function lsGo(d){
+  const L=window.LESSON||[];
+  if(d>0){ if(ls.i>=L.length-1){closeLesson();return;} ls.i++; }
+  else   { if(ls.i<=0)return; ls.i--; }
+  ls.step=0;renderLesson();
+}
+function lsStep(){if(ls.step<3){ls.step++;renderLesson();}}
+$('lsPrev').onclick=()=>lsGo(-1);
+$('lsNext').onclick=()=>lsGo(1);
+$('lsReveal').onclick=lsStep;
+$('lsClose').onclick=closeLesson;
+$('lsFull').onclick=()=>{const el=document.documentElement;
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+  else el.requestFullscreen&&el.requestFullscreen().catch(()=>{});};
+document.addEventListener('keydown',e=>{
+  if($('scLesson').classList.contains('hidden'))return;
+  const k=e.key;
+  if(k==='ArrowRight'||k==='PageDown'||k===' '){e.preventDefault();ls.step<3?lsStep():lsGo(1);}
+  else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();lsGo(-1);}
+  else if(k==='Escape'){e.preventDefault();closeLesson();}
+  else if(k==='f'||k==='F'){e.preventDefault();$('lsFull').click();}
+});
+/* 좌우 스와이프 */
+(function(){let x0=null,y0=null;
+  const el=$('scLesson');
+  el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(x0===null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
+    if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.6){dx<0?lsGo(1):lsGo(-1);}
+    x0=null;},{passive:true});
+})();
 
 renderHome();
 </script>
