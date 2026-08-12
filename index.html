@@ -125,6 +125,18 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .opt.ok{background:rgba(58,217,149,.14);border-color:var(--good)}
 .opt.no{background:rgba(255,95,109,.14);border-color:var(--bad)}
 .opt.dim{opacity:.45}
+/* ── 수식 표기 ── */
+.eq{display:inline-flex;align-items:center;gap:.28em;font-family:"Cambria Math","Times New Roman",Georgia,serif;
+  font-size:1.06em;line-height:1.35;white-space:nowrap}
+.eqb{display:flex;align-items:center;gap:.3em;flex-wrap:wrap;margin:10px 0;padding:11px 13px;
+  background:#0e1723;border:1px solid var(--line);border-left:3px solid var(--si);border-radius:10px;
+  font-family:"Cambria Math","Times New Roman",Georgia,serif;font-size:15.5px;color:#dbe7f7;overflow-x:auto}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;
+  margin:0 .22em;font-size:.95em}
+.frac>span{padding:0 .45em;display:block;text-align:center}
+.frac>span:first-child{border-bottom:1.4px solid currentColor;padding-bottom:.1em}
+.frac>span:last-child{padding-top:.1em}
+.eqn{color:var(--si);font-weight:700}
 .qfig{margin:2px 0 12px;text-align:center;background:#fff;border:1px solid var(--line);
   border-radius:12px;padding:10px}
 .qfig img{max-width:100%;height:auto;display:block;margin:0 auto}
@@ -402,8 +414,10 @@ const CHAPTERS=[
  {h:'해상도 — 왜 파장을 줄이나',lead:'R = k₁·λ / NA',
   body:`얼마나 가늘게 그릴 수 있는지는 두 식으로 정리됩니다.
   <ul>
-   <li><b class="hi">해상도 R = k₁ · λ / NA</b> → <b>파장 λ가 짧을수록, NA가 클수록 더 가늘게</b></li>
-   <li><b>초점심도 DOF = k₂ · λ / NA²</b> → NA를 키우면 해상도는 좋아지지만 <b>초점 여유는 급격히 줄어듦</b></li>
+   <li>해상도 — 파장 λ가 짧을수록, NA가 클수록 더 가늘게 그린다
+     <div class="eqb">R = k₁ · <span class="frac"><span>λ</span><span>NA</span></span></div></li>
+   <li>초점심도 — NA를 키우면 해상도는 좋아지지만 초점 여유가 <b>제곱으로</b> 줄어든다
+     <div class="eqb">DOF = k₂ · <span class="frac"><span>λ</span><span>NA²</span></span></div></li>
   </ul>
   <table>
    <tr><th>광원</th><th>파장</th><th>비고</th></tr>
@@ -756,17 +770,13 @@ const CHAPTERS=[
   <b>①② → 시간가동률</b>, <b>③④ → 성능가동률</b>, <b>⑤⑥ → 양품률</b>`,
   tip:'6대 로스를 셋씩 묶어 <b>시간 / 성능 / 품질</b>로 대응시키는 문제가 자주 나옵니다. 위 마지막 줄을 그대로 외우세요.'},
  {h:'보전 지표 계산 — 이건 반드시 손으로',lead:'MTBF · MTTR · 가용도 · OEE',
-  body:`<ul>
-   <li><b class="hi">MTBF</b> (평균고장간격) = 총 가동시간 ÷ 고장 횟수 &nbsp;→ <b>길수록 좋다(신뢰성)</b></li>
-   <li><b class="hi">MTTR</b> (평균수리시간) = 총 수리시간 ÷ 고장 횟수 &nbsp;→ <b>짧을수록 좋다(보전성)</b></li>
-   <li><b class="hi">가용도(Availability)</b> = MTBF ÷ (MTBF + MTTR) × 100%</li>
-  </ul>
-  <b class="hi">설비종합효율(OEE)</b> = <b>시간가동률 × 성능가동률 × 양품률</b>
-  <ul>
-   <li>시간가동률 = 가동시간 ÷ 부하시간</li>
-   <li>성능가동률 = (이론 사이클타임 × 생산량) ÷ 가동시간</li>
-   <li>양품률 = 양품수 ÷ 총생산량</li>
-  </ul>
+  body:`<div class="eqb">MTBF = <span class="frac"><span>총 가동시간</span><span>고장 횟수</span></span> &nbsp;<span style="font-family:inherit;font-size:12.5px;color:var(--dim)">평균고장간격 · 길수록 좋다(신뢰성)</span></div>
+  <div class="eqb">MTTR = <span class="frac"><span>총 수리시간</span><span>고장 횟수</span></span> &nbsp;<span style="font-family:inherit;font-size:12.5px;color:var(--dim)">평균수리시간 · 짧을수록 좋다(보전성)</span></div>
+  <div class="eqb">가용도 = <span class="frac"><span>MTBF</span><span>MTBF + MTTR</span></span> × 100 %</div>
+  <b class="hi">설비종합효율(OEE)</b>
+  <div class="eqb">OEE = 시간가동률 × 성능가동률 × 양품률</div>
+  <div class="eqb">시간가동률 = <span class="frac"><span>가동시간</span><span>부하시간</span></span></div>
+  <div class="eqb">성능가동률 = <span class="frac"><span>이론 CT × 생산량</span><span>가동시간</span></span> &nbsp;·&nbsp; 양품률 = <span class="frac"><span>양품수</span><span>총생산량</span></span></div>
   <div class="tipbox" style="margin-top:10px"><b>예제</b> 부하 480분 중 정지 80분 → 가동 400분. 400분에 200개 생산(이론 CT 1.6분/개), 그중 190개 양품.<br>
   시간가동률 400/480 = 83.3% · 성능 (1.6×200)/400 = 80% · 양품 190/200 = 95%<br>
   <b>OEE = 0.833 × 0.8 × 0.95 ≈ 63.3%</b></div>`,
@@ -791,7 +801,9 @@ const CHAPTERS=[
    <tr><td>정밀 정지</td><td>어렵다(압축됨)</td><td>쉽다</td></tr>
   </table>
   반도체 장비는 <b class="hi">청정도</b>가 최우선이라 대부분 <b>공압</b>(밸브·척·게이트도어)과 <b>전동(서보/스테핑 모터)</b>을 씁니다.
-  <br><br><b>파스칼의 원리</b>: 밀폐된 유체에 가한 압력은 모든 방향에 같게 전달됩니다. → <b class="hi">F = P × A</b> (힘 = 압력 × 단면적)`,
+  <br><br><b>파스칼의 원리</b>: 밀폐된 유체에 가한 압력은 모든 방향에 같게 전달됩니다.
+  <div class="eqb">F = P × A &nbsp;&nbsp;<span style="font-family:inherit;font-size:12.5px;color:var(--dim)">힘 = 압력 × 단면적 · 1 MPa = 1 N/mm²</span></div>
+  <div class="eqb">A = π r² = <span class="frac"><span>π D²</span><span>4</span></span></div>`,
   tip:'계산 단골: 실린더 지름 50mm(단면적 약 19.6cm²)에 0.5MPa(=5kgf/cm²)를 걸면 <b>약 98kgf</b>. 단면적이 커질수록 힘이 커집니다.'},
  {h:'공압 회로의 기본 부품',lead:'만들고 → 다듬고 → 보내고 → 움직인다',
   body:`<ul>
@@ -917,11 +929,12 @@ const CHAPTERS=[
 
 {id:'c8',icon:'⚡',title:'전기·전자 기초',sub:'계산 문제가 나오는 곳',cards:[
  {h:'옴의 법칙과 전력',lead:'세 글자만 외우면 된다',
-  body:`<b class="hi">V = I × R</b> (전압 = 전류 × 저항), <b class="hi">P = V × I = I²R</b> (전력)
+  body:`<div class="eqb">V = I × R &nbsp;·&nbsp; I = <span class="frac"><span>V</span><span>R</span></span> &nbsp;·&nbsp; P = V I = I² R</div>
   <ul>
    <li>단위: V(볼트) · A(암페어) · Ω(옴) · W(와트)</li>
    <li><b>직렬</b> 합성저항 = R₁ + R₂ + … (전류가 같다)</li>
-   <li><b>병렬</b> 합성저항 = 1 ÷ (1/R₁ + 1/R₂) (전압이 같다) — 같은 값 2개면 <b>절반</b></li>
+   <li><b>병렬</b> 합성저항 (전압이 같다) — 같은 값 2개면 <b>절반</b>
+     <div class="eqb">R = <span class="frac"><span>R₁ × R₂</span><span>R₁ + R₂</span></span></div></li>
    <li>키르히호프: 한 점에 들어온 전류의 합 = 나간 전류의 합</li>
   </ul>
   <div class="tipbox" style="margin-top:10px"><b>예제</b> 24V에 12Ω → I = 24/12 = <b>2A</b>, P = 24×2 = <b>48W</b>.<br>
@@ -990,12 +1003,11 @@ const CHAPTERS=[
   </ul>`,
   tip:'재발 방지의 결론은 늘 <b>개량보전(CM)</b>으로 갑니다. "다시 안 나게 설비를 바꿨다"까지 가야 끝난 겁니다.'},
  {h:'신뢰도 계산',lead:'직렬은 곱하고, 병렬은 실패를 곱한다',
-  body:`<ul>
-   <li><b>신뢰도 R</b> = 정해진 시간 동안 고장 없이 버틸 확률 (0~1)</li>
-   <li><b class="hi">직렬</b>(하나만 고장 나도 전체 정지) → <b>R = R₁ × R₂ × …</b> → 부품이 많을수록 <b>급격히 나빠짐</b></li>
-   <li><b class="hi">병렬</b>(예비기 있음) → <b>R = 1 − (1−R₁)(1−R₂)</b> → 하나 살아 있으면 됨, 훨씬 좋아짐</li>
-   <li><b>고장률 λ = 1 ÷ MTBF</b> (단위: 회/시간)</li>
-  </ul>
+  body:`<p style="font-size:14px;line-height:1.8;margin:0"><b>신뢰도 R</b> = 정해진 시간 동안 고장 없이 버틸 확률 (0~1)</p>
+  <div class="eqb"><span style="font-family:inherit;color:var(--si);font-weight:700">직렬</span>&nbsp; R = R₁ × R₂ × … × R<sub>n</sub></div>
+  <div class="eqb"><span style="font-family:inherit;color:var(--si);font-weight:700">병렬</span>&nbsp; R = 1 − (1 − R₁)(1 − R₂)</div>
+  <div class="eqb">λ = <span class="frac"><span>1</span><span>MTBF</span></span> &nbsp;<span style="font-family:inherit;font-size:12.5px;color:var(--dim)">고장률, 회/시간</span></div>
+  <p style="font-size:13.5px;line-height:1.8;color:var(--dim);margin:6px 0 0">직렬은 하나만 고장 나도 전체가 서므로 부품이 많을수록 급격히 나빠지고, 병렬(예비기)은 하나만 살아 있으면 되므로 크게 좋아진다.</p>
   <div class="tipbox" style="margin-top:10px"><b>예제</b> R=0.9 부품 3개 직렬 → 0.9³ = <b>0.729</b>.<br>
   R=0.9 두 대를 병렬로 두면 → 1 − (0.1×0.1) = <b>0.99</b>. 예비기 한 대의 힘이 이만큼 큽니다.</div>`,
   tip:'"부품 수가 늘면 신뢰도는?" → <b>직렬이므로 떨어진다</b>. 반대로 예비를 병렬로 두면 올라갑니다.'},
@@ -1128,58 +1140,58 @@ const CALC=[
  ()=>{const h=[400,500,600,800][Math.floor(Math.random()*4)],f=[4,5,8,10][Math.floor(Math.random()*4)];
    return {q:`총 가동시간 ${h}시간 동안 고장이 ${f}회 발생했다. <b>MTBF</b>는 몇 시간인가?`,
      a:h/f,unit:'시간',
-     e:`MTBF = 총 가동시간 ÷ 고장 횟수 = ${h} ÷ ${f} = <b>${h/f}시간</b>`};},
+     e:`<span class="eqb">MTBF = <span class="frac"><span>총 가동시간</span><span>고장 횟수</span></span> = <span class="frac"><span>${h}</span><span>${f}</span></span> = <span class="eqn">${h/f} 시간</span></span>`};},
  ()=>{const m=[60,90,120,150][Math.floor(Math.random()*4)],f=[3,4,5,6][Math.floor(Math.random()*4)];
    return {q:`고장 ${f}회를 수리하는 데 총 ${m}분이 걸렸다. <b>MTTR</b>은 몇 분인가?`,
      a:m/f,unit:'분',
-     e:`MTTR = 총 수리시간 ÷ 고장 횟수 = ${m} ÷ ${f} = <b>${m/f}분</b>`};},
+     e:`<span class="eqb">MTTR = <span class="frac"><span>총 수리시간</span><span>고장 횟수</span></span> = <span class="frac"><span>${m}</span><span>${f}</span></span> = <span class="eqn">${m/f} 분</span></span>`};},
  ()=>{const b=[90,95,180,240][Math.floor(Math.random()*4)],r=[10,5,20,60][Math.floor(Math.random()*4)];
    return {q:`MTBF가 ${b}시간, MTTR이 ${r}시간이다. <b>가용도(가동률)</b>는 몇 %인가?`,
      a:Math.round(b/(b+r)*1000)/10,unit:'%',
-     e:`가용도 = MTBF ÷ (MTBF+MTTR) = ${b} ÷ ${b+r} = <b>${Math.round(b/(b+r)*1000)/10}%</b>`};},
+     e:`<span class="eqb">가용도 = <span class="frac"><span>MTBF</span><span>MTBF + MTTR</span></span> = <span class="frac"><span>${b}</span><span>${b}+${r}</span></span> = <span class="eqn">${Math.round(b/(b+r)*1000)/10} %</span></span>`};},
  ()=>{const load=[480,400,600][Math.floor(Math.random()*3)],stop=[80,40,60,120][Math.floor(Math.random()*4)];
    const run=load-stop; return {q:`부하시간 ${load}분 중 정지시간이 ${stop}분이었다. <b>시간가동률</b>은 몇 %인가?`,
      a:Math.round(run/load*1000)/10,unit:'%',
-     e:`시간가동률 = 가동시간 ÷ 부하시간 = ${run} ÷ ${load} = <b>${Math.round(run/load*1000)/10}%</b>`};},
+     e:`<span class="eqb">시간가동률 = <span class="frac"><span>가동시간</span><span>부하시간</span></span> = <span class="frac"><span>${run}</span><span>${load}</span></span> = <span class="eqn">${Math.round(run/load*1000)/10} %</span></span>`};},
  ()=>{const t=[90,80,85][Math.floor(Math.random()*3)],p=[80,90,75][Math.floor(Math.random()*3)],q=[95,98,90][Math.floor(Math.random()*3)];
    const v=Math.round(t*p*q/10000*10)/10;
    return {q:`시간가동률 ${t}%, 성능가동률 ${p}%, 양품률 ${q}%일 때 <b>설비종합효율(OEE)</b>은 몇 %인가?`,
      a:v,unit:'%',
-     e:`OEE = 시간가동률 × 성능가동률 × 양품률 = ${t/100} × ${p/100} × ${q/100} = <b>${v}%</b> (더하지 말고 곱합니다)`};},
+     e:`<span class="eqb">OEE = 시간가동률 × 성능가동률 × 양품률<br>= ${t/100} × ${p/100} × ${q/100} = <span class="eqn">${v} %</span></span> 세 값을 <b>곱합니다</b> — 더하거나 평균 내면 안 됩니다.`};},
  ()=>{const d=[50,63,80,100][Math.floor(Math.random()*4)],p=[0.4,0.5,0.6][Math.floor(Math.random()*3)];
    const area=Math.PI*Math.pow(d/2,2); const f=Math.round(p*area); // MPa*mm^2 = N
    return {q:`안지름 ${d}mm 공압 실린더에 ${p}MPa를 공급했다. 이론 <b>전진 출력</b>은 약 몇 N인가? (소수점 반올림)`,
      a:f,unit:'N',tol:Math.max(3,Math.round(f*0.02)),
-     e:`F = P × A, A = π×(${d}/2)² ≈ ${Math.round(area)}mm², F = ${p}N/mm² × ${Math.round(area)}mm² ≈ <b>${f}N</b> (1MPa = 1N/mm²)`};},
+     e:`<span class="eqb">F = P × A &nbsp;/&nbsp; A = π × ( <span class="frac"><span>${d}</span><span>2</span></span> )² ≈ ${Math.round(area)} mm²<br>F = ${p} N/mm² × ${Math.round(area)} mm² ≈ <span class="eqn">${f} N</span></span> 1 MPa = 1 N/mm² 로 두면 계산이 쉽습니다.`};},
  ()=>{const r=[0.9,0.95,0.8][Math.floor(Math.random()*3)],n=[2,3][Math.floor(Math.random()*2)];
    const v=Math.round(Math.pow(r,n)*10000)/10000;
    return {q:`신뢰도 ${r}인 부품 ${n}개가 <b>직렬</b>로 연결되어 있다. 전체 신뢰도는? (소수 넷째자리까지)`,
      a:v,unit:'',tol:0.0006,
-     e:`직렬은 곱합니다. ${r}<sup>${n}</sup> = <b>${v}</b> — 부품이 늘수록 신뢰도는 떨어집니다.`};},
+     e:`<span class="eqb">R = R₁ × R₂ × … = ${r}<sup>${n}</sup> = <span class="eqn">${v}</span></span> 직렬은 <b>곱</b>이라 부품이 늘수록 신뢰도가 떨어집니다.`};},
  ()=>{const r=[0.9,0.8,0.95][Math.floor(Math.random()*3)];
    const v=Math.round((1-Math.pow(1-r,2))*10000)/10000;
    return {q:`신뢰도 ${r}인 설비 2대를 <b>병렬</b>(예비기)로 두었다. 전체 신뢰도는? (소수 넷째자리까지)`,
      a:v,unit:'',tol:0.0006,
-     e:`병렬은 둘 다 실패할 확률을 뺍니다. 1 − (1−${r})² = <b>${v}</b> — 예비기 한 대의 효과가 큽니다.`};},
+     e:`<span class="eqb">R = 1 − (1 − R₁)(1 − R₂) = 1 − (1 − ${r})² = <span class="eqn">${v}</span></span> 둘 다 실패할 확률만 빼면 되므로 예비기 한 대의 효과가 큽니다.`};},
  ()=>{const b=[200,250,500,400][Math.floor(Math.random()*4)];
    const v=Math.round(1/b*100000)/100000;
    return {q:`MTBF가 ${b}시간인 설비의 <b>고장률(λ)</b>은 몇 회/시간인가? (소수 다섯째자리까지)`,
      a:v,unit:'회/h',tol:0.000006,
-     e:`λ = 1 ÷ MTBF = 1 ÷ ${b} = <b>${v} 회/시간</b>`};},
+     e:`<span class="eqb">λ = <span class="frac"><span>1</span><span>MTBF</span></span> = <span class="frac"><span>1</span><span>${b}</span></span> = <span class="eqn">${v} 회/시간</span></span>`};},
  ()=>{const V=[12,24,100,220][Math.floor(Math.random()*4)],R=[4,8,10,20][Math.floor(Math.random()*4)];
    return {q:`${V}V 전원에 ${R}Ω 저항을 연결했다. 흐르는 <b>전류</b>는 몇 A인가?`,
      a:Math.round(V/R*100)/100,unit:'A',tol:0.02,
-     e:`옴의 법칙 I = V ÷ R = ${V} ÷ ${R} = <b>${Math.round(V/R*100)/100}A</b>`};},
+     e:`<span class="eqb">I = <span class="frac"><span>V</span><span>R</span></span> = <span class="frac"><span>${V}</span><span>${R}</span></span> = <span class="eqn">${Math.round(V/R*100)/100} A</span></span>`};},
  ()=>{const a=[6,10,12,20][Math.floor(Math.random()*4)],b=[3,15,4,30][Math.floor(Math.random()*4)];
    const v=Math.round(a*b/(a+b)*100)/100;
    return {q:`${a}Ω과 ${b}Ω을 <b>병렬</b>로 연결했을 때 합성저항은 몇 Ω인가?`,
      a:v,unit:'Ω',tol:0.02,
-     e:`병렬 = 곱÷합 = (${a}×${b}) ÷ (${a}+${b}) = <b>${v}Ω</b> — 항상 가장 작은 저항보다 작아집니다.`};},
+     e:`<span class="eqb">R = <span class="frac"><span>R₁ × R₂</span><span>R₁ + R₂</span></span> = <span class="frac"><span>${a} × ${b}</span><span>${a} + ${b}</span></span> = <span class="eqn">${v} Ω</span></span> 병렬 합성저항은 <b>항상 가장 작은 저항보다 작습니다</b>.`};},
  ()=>{const n=[6205,6208,6210,6212][Math.floor(Math.random()*4)];
    const v=(n%100)*5;
    return {q:`베어링 호칭번호 <b>${n}</b>의 <b>안지름</b>은 몇 mm인가?`,
      a:v,unit:'mm',tol:0.4,
-     e:`뒤 두 자리 ${String(n).slice(-2)} × 5 = <b>${v}mm</b> (04번부터 적용, 00~03은 10·12·15·17mm 예외)`};},
+     e:`<span class="eqb">안지름 = 호칭번호 뒤 두 자리 × 5 = ${String(n).slice(-2)} × 5 = <span class="eqn">${v} mm</span></span> 04번부터 적용되고 00~03은 10·12·15·17mm로 예외입니다.`};},
 ];
 
 /* ─────────────────────────────────────────
