@@ -279,6 +279,20 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
     <div class="bd">실제 필기와 같은 <b>60문항 · 60분 · 60점 합격</b>. 출제 비중대로 단원별 문항 수를 배분합니다.
     시간이 끝나면 남은 문항은 오답 처리됩니다.</div></button>
 
+  <div class="sect">🔒 교재 문제은행</div>
+  <div class="card" id="lockCard" style="margin-bottom:10px">
+    <div style="font-size:14.5px;font-weight:800">교재 문항 <span id="lockN">–</span></div>
+    <p class="note" style="margin-top:6px">교재에서 옮긴 문항은 <b>암호를 넣어야</b> 열립니다.
+      풀리면 빠른 점검·실전 모의고사 출제에 함께 들어갑니다.</p>
+    <div class="row" style="margin-top:10px">
+      <input id="lockPw" type="password" autocomplete="off" placeholder="암호"
+        style="flex:1;min-width:150px;background:#0d1622;border:1px solid var(--line);border-radius:11px;
+               color:var(--ink);padding:11px 13px;font-size:14.5px;font-family:inherit">
+      <button class="btn" id="lockGo">열기</button>
+    </div>
+    <div id="lockMsg" class="note" style="margin-top:8px"></div>
+  </div>
+
   <div class="sect">🎓 수업용 · 교사가 앞에서 진행</div>
   <button class="big" data-go="lesson"><div class="bt">🎓 수업 슬라이드 <span class="pill" id="p_lesson">9장</span></div>
     <div class="bd">교재 도해를 그대로 띄우고 요점 → <b>발문</b> → 즉석 퀴즈로 진행합니다.
@@ -1122,8 +1136,25 @@ const CHAPTERS=[
    [추가지점 4] 자료를 보고 비중을 조정하려면 이 숫자만 고치면 된다.
    ───────────────────────────────────────── */
 const WEIGHT={
-  c1:3,  c2:2,  c11:5, c12:5, c13:5, c14:5, c15:5, c16:5,
-  c3:4,  c4:5,  c5:5,  c6:5,  c7:2,  c8:2,  c9:1,  c10:1
+  /* 교재 문제편의 실제 문항 수 비율(총 701문항)을 60문항으로 환산한 값.
+     자동화·공유압 215문항(31%), 안전관리 87문항(12%)이 압도적으로 크다 —
+     추정이 아니라 교재가 실제로 그렇게 배분해 놓았다. */
+  c1:4,   /* 반도체 입문 55문 */
+  c2:1,   /* 8대 공정 흐름 (도구 자체 단원) */
+  c11:4,  /* 사진공정 63문 */
+  c12:5,  /* 식각공정 57문 */
+  c13:5,  /* 산화확산 41 + 이온주입 21 = 62문 */
+  c14:4,  /* CVD·PVD 62문 */
+  c15:4,  /* CMP·세정 60문 */
+  c16:3,  /* 반도체 조립 40문 */
+  c3:2,   /* 장비 요소기술 (출제기준 3·4번 항목) */
+  c4:2,   /* 설비보전 이론 (직무모형) */
+  c5:13,  /* 자동화 기초·공유압 215문 — 가장 큰 덩어리 */
+  c6:6,   /* 안전관리 87문 */
+  c7:1,   /* 기계요소·정비 */
+  c8:3,   /* 전기·전자 기초 (자동화 215문에 포함되어 있음) */
+  c9:2,   /* 측정·진단 (센서·계측) */
+  c10:1   /* 팹 유틸리티·장비 반입 */
 };
 
 /* ─────────────────────────────────────────
@@ -2072,6 +2103,48 @@ document.addEventListener('keydown',e=>{
     if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.6){dx<0?lsGo(1):lsGo(-1);}
     x0=null;},{passive:true});
 })();
+
+/* =========================================================
+   교재 문제은행 잠금 해제
+   정적 호스팅에서는 화면 비밀번호가 보호가 안 되므로 파일 자체를 AES-GCM 으로 암호화해 둔다.
+   여기서는 WebCrypto 로 실제 복호화한다. 암호가 틀리면 복호화 자체가 실패한다.
+   ========================================================= */
+const LOCK_KEY='sbm_v1_pw';
+async function unlockBank(pw,quiet){
+  const msg=$('lockMsg');
+  const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
+  try{
+    say('여는 중…');
+    const blob=await (await fetch('bank.enc',{cache:'no-store'})).json();
+    const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+    const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+    const key=await crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt:b64(blob.salt),iterations:blob.iter,hash:'SHA-256'},
+      base,{name:'AES-GCM',length:256},false,['decrypt']);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(blob.nonce)},key,b64(blob.ct));
+    // gzip 해제 (브라우저 내장 DecompressionStream)
+    const ds=new DecompressionStream('gzip');
+    const txt=await new Response(new Blob([plain]).stream().pipeThrough(ds)).text();
+    const rows=JSON.parse(txt);
+    const seen=new Set(BANK.map(q=>q.q));
+    let added=0;
+    rows.forEach(r=>{if(!seen.has(r.q)){BANK.push(r);seen.add(r.q);added++;}});
+    try{localStorage.setItem(LOCK_KEY,pw);}catch(e){}
+    say(`✅ 교재 문항 ${added}개가 열렸습니다. 이제 문제은행 <b>${BANK.length}문항</b>에서 출제됩니다.`,'ok');
+    $('lockPw').value='';renderHome();
+    return true;
+  }catch(e){
+    say('암호가 맞지 않습니다.','bad');
+    try{localStorage.removeItem(LOCK_KEY);}catch(_){}
+    return false;
+  }
+}
+$('lockGo').onclick=()=>unlockBank($('lockPw').value.trim());
+$('lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')$('lockGo').click();});
+/* 문항 수 표시 + 이전에 열었으면 자동 해제 */
+fetch('bank.enc',{cache:'no-store'}).then(r=>r.json()).then(b=>{$('lockN').textContent=b.n+'문항';})
+  .catch(()=>{$('lockN').textContent='(준비 중)';});
+(function(){try{const pw=localStorage.getItem(LOCK_KEY);if(pw)unlockBank(pw,true);}catch(e){}})();
 
 renderHome();
 </script>
