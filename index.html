@@ -8,6 +8,10 @@
 <script src="https://hongyul67-cpu.github.io/links/collector.js" data-tool="반도체설비보전 마스터"></script>
 <!-- 공용 연출 위젯 -->
 <script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
+<!-- 수업모드: 우하단 🎓 버튼 / ?class=1 / F9 -->
+<script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>
+<!-- 기출문제 데이터 -->
+<script src="exams.js"></script>
 <style>
 :root{
   --bg:#0c1017; --panel:#161c27; --panel2:#1e2634; --line:#2c3648;
@@ -121,6 +125,9 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .opt.ok{background:rgba(58,217,149,.14);border-color:var(--good)}
 .opt.no{background:rgba(255,95,109,.14);border-color:var(--bad)}
 .opt.dim{opacity:.45}
+.qfig{margin:2px 0 12px;text-align:center;background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:10px}
+.qfig img{max-width:100%;height:auto;display:block;margin:0 auto}
 .exp{margin-top:10px;background:#101a26;border:1px solid var(--line);border-left:3px solid var(--si);
   border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.7;color:#cfdcee}
 .exp b{color:var(--si)}
@@ -224,6 +231,9 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   <button class="big" data-go="mock"><div class="bt">🏁 실전 모의고사 (60문항 · 60분) <span class="pill" id="p_mock">–</span></div>
     <div class="bd">실제 필기와 같은 <b>60문항 · 60분 · 60점 합격</b>. 출제 비중대로 단원별 문항 수를 배분합니다.
     시간이 끝나면 남은 문항은 오답 처리됩니다.</div></button>
+
+  <div class="sect">📜 4단계 · 기출문제 풀어보기</div>
+  <div id="examList"></div>
 
   <p class="note" style="margin-top:18px;color:var(--dim2);font-size:11.5px">
     ※ 단원 구성은 이 종목 표준 문제집의 10개 Part(반도체 입문 / 사진 / 식각 / 확산 / CVD·PVD·ALD /
@@ -1576,6 +1586,19 @@ function renderHome(){
     b.onclick=()=>startLearn(i);
     list.appendChild(b);
   });
+  // 기출 회차 카드
+  const el=$('examList');
+  if(el&&window.EXAMS){
+    el.innerHTML='';
+    EXAMS.forEach(ex=>{
+      const b=document.createElement('button');b.className='big';
+      const bk=best['ex_'+ex.id];
+      b.innerHTML=`<div class="bt">📜 ${ex.title} ${bk!=null?`<span class="pill" style="color:var(--gold);border-color:var(--gold)">최고 ${bk}점</span>`:''}</div>
+        <div class="bd">${ex.sub} · 실제 출제된 문항 그대로. 보기 순서도 원본 그대로입니다.</div>`;
+      b.onclick=()=>startExam(ex.id);
+      el.appendChild(b);
+    });
+  }
   ['g1','g2','g3','test','mock'].forEach(k=>{
     const p=$('p_'+k);if(!p)return;
     p.textContent = best[k]!=null ? `최고 ${best[k]}${(k==='test'||k==='mock')?'점':''}` : '–';
@@ -1645,7 +1668,7 @@ function beginQuiz(mode,items){
   stopTimer();
   g={mode,items,i:0,correct:0,wrong:[],t0:Date.now(),answered:false};
   $('hud').innerHTML='';
-  if(mode==='mock'){
+  if(mode==='mock'||mode==='exam'){
     const t=document.createElement('div');t.id='mocktimer';t.className='mocktimer';$('hud').appendChild(t);
     deadline=Date.now()+MOCK_MIN*60*1000;paintTimer();
     timerId=setInterval(paintTimer,1000);
@@ -1663,9 +1686,10 @@ function nextQ(){
 function renderMCQ(){
   const it=g.items[g.i];
   $('qcard').innerHTML=`
-    <div class="qhead"><span>${g.mode==='test'?'🎯 빠른 점검':g.mode==='mock'?'🏁 실전 모의고사':'🚨 이상 진단'} ${g.i+1} / ${g.items.length}</span>
+    <div class="qhead"><span>${({test:'🎯 빠른 점검',mock:'🏁 실전 모의고사',exam:'📜 기출문제',diag:'🚨 이상 진단'})[g.mode]||''} ${g.i+1} / ${g.items.length}</span>
       <span>맞은 개수 ${g.correct}</span></div>
     <div class="qtext">${it.q||it.s}</div>
+    ${it.img?`<div class="qfig"><img src="img/${it.img}" alt="문제 그림" loading="lazy"></div>`:''}
     <div id="opts"></div><div id="expwrap"></div>`;
   const ow=$('opts');
   it.o.forEach((o,idx)=>{
@@ -1824,6 +1848,13 @@ function pickWeighted(total){
   });
 }
 function startTest(){beginQuiz('test',pickWeighted(20));}
+/* 기출은 보기 순서를 섞지 않는다 — 실제 시험 그대로 재현하는 것이 목적 */
+let examId=null;
+function startExam(id){
+  const ex=EXAMS.find(x=>x.id===id);if(!ex)return;
+  examId=id;
+  beginQuiz('exam',ex.q.map(x=>({q:x.q,o:x.o.slice(),a:x.a,e:x.e,img:x.img})));
+}
 function startMock(){beginQuiz('mock',pickWeighted(60));}
 
 /* =========================================================
@@ -1831,7 +1862,7 @@ function startMock(){beginQuiz('mock',pickWeighted(60));}
    ========================================================= */
 function finish(){
   stopTimer();
-  const scored = g.mode==='test'||g.mode==='mock';   // 100점 만점으로 환산하는 모드
+  const scored = g.mode==='test'||g.mode==='mock'||g.mode==='exam';   // 100점 만점으로 환산하는 모드
   const total = g.mode==='order' ? STEPS.length : g.items.length;
   // 순서 게임은 결국 8칸을 다 채우므로, "한 번에 맞힌 자리 수"를 점수로 본다
   const correct = g.mode==='order'
@@ -1873,7 +1904,7 @@ function finish(){
   },400+total*55);
 
   // 최고기록
-  const key=({test:'test',mock:'mock',order:'g1',diag:'g2',calc:'g3'})[g.mode];
+  const key = g.mode==='exam' ? 'ex_'+examId : ({test:'test',mock:'mock',order:'g1',diag:'g2',calc:'g3'})[g.mode];
   const v=scored?score:correct;
   if(key&&(best[key]==null||v>best[key])){best[key]=v;store.set('best',best);}
 
@@ -1888,7 +1919,8 @@ function finish(){
   }
 
   $('resRetry').onclick=()=>{
-    ({test:startTest,mock:startMock,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
+    if(g.mode==='exam')startExam(examId);
+    else ({test:startTest,mock:startMock,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
   };
   $('resHome').onclick=goHome;
 
