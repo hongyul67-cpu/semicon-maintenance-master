@@ -1961,7 +1961,7 @@ function pickWeighted(total){
   }
   return shuffle(picked).map(q=>{
     const ans=q.o[q.a],opts=shuffle(q.o);
-    return {q:q.q,o:opts,a:opts.indexOf(ans),e:q.e};
+    return {q:q.q,o:opts,a:opts.indexOf(ans),e:q.e,img:q.img};   // 그림이 있는 문항은 그림도 같이
   });
 }
 function startTest(){beginQuiz('test',pickWeighted(20));}
