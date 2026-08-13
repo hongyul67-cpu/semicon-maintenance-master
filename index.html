@@ -195,7 +195,18 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .ls-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;
   display:flex;flex-direction:column;gap:12px}
 .ls-fig{background:#fff;border-radius:14px;padding:8px;text-align:center;flex-shrink:0}
-.ls-fig img{max-width:100%;max-height:min(42vh,420px);height:auto;display:block;margin:0 auto}
+.ls-fig img{max-width:100%;max-height:min(36vh,360px);height:auto;display:block;margin:0 auto}
+/* 퀴즈까지 열리면 아래가 길어져 보기가 화면 밖으로 밀린다 → 그림을 줄여 한 화면에 담는다 */
+.ls-body.compact .ls-fig img{max-height:min(24vh,230px)}
+.ls-body.compact .ls-pts li{font-size:clamp(13px,1.5vw,17px);padding:7px 12px}
+.ls-body.compact .ls-cap{display:none}
+.ls-body.compact .ls-ask{padding:9px 12px;font-size:clamp(13.5px,1.7vw,19px)}
+/* 폰처럼 좁고 짧은 화면에서는 퀴즈 단계에 그림을 더 줄이고 요점을 접는다 */
+@media (max-width:560px){
+  .ls-body.compact .ls-fig img{max-height:15vh}
+  .ls-body.compact .ls-pts{max-height:19vh;overflow-y:auto}
+  .ls-body.compact .ls-pts li{font-size:12.5px;line-height:1.45;padding:6px 10px}
+}
 .ls-cap{font-size:clamp(11.5px,1.4vw,14px);color:var(--dim);text-align:center;margin-top:5px}
 .ls-pts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px}
 .ls-pts li{font-size:clamp(14px,1.8vw,20px);line-height:1.6;background:var(--panel);
@@ -215,6 +226,8 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:0 16px}
 .ls-bar .wide{flex:1;background:linear-gradient(180deg,var(--si2),#2472c8);border:0;color:#fff}
 .ls-bar .gold{background:linear-gradient(180deg,#caa14a,#a37c26);border:0;color:#1b1403}
+/* 다 열린 뒤에는 눌러도 소용없다는 게 보여야 한다 */
+.ls-bar button:disabled{opacity:.42;filter:grayscale(.6);cursor:default}
 @media (max-width:520px){ .ls-bar button{padding:0 11px;font-size:14px} .ls-top{padding:9px 12px} }
 
 /* ── 하단 고정 ── */
@@ -294,6 +307,10 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   </div>
 
   <div class="sect">🎓 수업용 · 교사가 앞에서 진행</div>
+  <a class="big" href="board.html" style="text-decoration:none;color:inherit;display:block">
+    <div class="bt">🖥️ 전자칠판 수업 도구 <span class="pill" style="color:var(--gold);border-color:var(--gold)">새 창 화면</span></div>
+    <div class="bd">큰 화면 전용. 화면 위에 <b>바로 판서</b>(펜·형광펜·지우개)하고, 슬라이드·문제를 큰 글씨로 띄웁니다.
+    타이머 · 번호 뽑기 · 가리개 포함.</div></a>
   <button class="big" data-go="lesson"><div class="bt">🎓 수업 슬라이드 <span class="pill" id="p_lesson">9장</span></div>
     <div class="bd">교재 도해를 그대로 띄우고 요점 → <b>발문</b> → 즉석 퀴즈로 진행합니다.
     큰 글씨·좌우 스와이프·리모컨(PageUp/Down) 지원.</div></button>
@@ -2070,6 +2087,7 @@ function renderLesson(){
   $('lsReveal').textContent = ['💭 발문 열기','🎯 퀴즈 내기','✅ 정답 공개','✔ 모두 공개됨'][ls.step];
   $('lsReveal').disabled = ls.step>=3;
   $('lsNext').textContent = ls.i>=L.length-1 ? '수업 끝 ✓' : '다음 →';
+  $('lsBody').classList.toggle('compact', ls.step>=2);
   $('lsBody').scrollTop=0;
 }
 function lsGo(d){
