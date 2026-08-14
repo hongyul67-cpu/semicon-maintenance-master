@@ -2144,9 +2144,11 @@ async function unlockBank(pw,quiet){
     const ds=new DecompressionStream('gzip');
     const txt=await new Response(new Blob([plain]).stream().pipeThrough(ds)).text();
     const rows=JSON.parse(txt);
-    const seen=new Set(BANK.map(q=>q.q));
+    // 지문이 같아도 보기가 다르면 다른 문항 → 지문+보기로 중복 판정
+    const dupKey=q=>q.q+'‖'+(q.o||[]).join('¦');
+    const seen=new Set(BANK.map(dupKey));
     let added=0;
-    rows.forEach(r=>{if(!seen.has(r.q)){BANK.push(r);seen.add(r.q);added++;}});
+    rows.forEach(r=>{const k=dupKey(r);if(!seen.has(k)){BANK.push(r);seen.add(k);added++;}});
     try{localStorage.setItem(LOCK_KEY,pw);}catch(e){}
     say(`✅ 교재 문항 ${added}개가 열렸습니다. 이제 문제은행 <b>${BANK.length}문항</b>에서 출제됩니다.`,'ok');
     $('lockPw').value='';renderHome();
