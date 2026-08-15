@@ -10,6 +10,8 @@
 <script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
 <!-- 수업모드: 우하단 🎓 버튼 / ?class=1 / F9 -->
 <script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>
+<!-- 계급(아이언~마스터) · 랭크 포인트 -->
+<script src="https://hongyul67-cpu.github.io/links/rank.js" data-tool="반도체설비보전 필기"></script>
 <!-- 기출문제 데이터 -->
 <script src="exams.js"></script>
 <!-- 수업 슬라이드 -->
@@ -139,6 +141,11 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .frac>span:first-child{border-bottom:1.4px solid currentColor;padding-bottom:.1em}
 .frac>span:last-child{padding-top:.1em}
 .eqn{color:var(--si);font-weight:700}
+/* ── 계급표 표 ── */
+.rk-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.rk-tbl th,.rk-tbl td{border:1px solid var(--line);padding:7px 9px;text-align:left}
+.rk-tbl th{background:var(--panel2);color:var(--si);font-weight:800}
+.rk-tbl tr.cur{background:rgba(124,198,255,.10)}
 /* ── 배우기 본문 도해 (교재 원본 크롭) ── */
 .lfig{margin:13px 0 4px;padding:0}
 .lfig img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;
@@ -281,6 +288,11 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
     </p>
   </div>
 
+  <div class="card" id="rankCard" style="margin-bottom:14px;padding:13px;display:none">
+    <div id="rankCardIn"></div>
+    <button class="btn ghost" id="btnRank" style="width:100%;margin-top:11px">🏆 계급표 · 기록</button>
+  </div>
+
   <div class="sect">📖 1단계 · 배우기 <span class="pill" id="learnPill">0 / 10</span></div>
   <div class="bar" style="margin-bottom:10px"><div class="barin" id="learnBar"></div></div>
   <div id="chapList"></div>
@@ -347,11 +359,14 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 </section>
 
 <!-- ══════════ 결과 ══════════ -->
+<section id="scRank" class="hidden"><div id="rankBody"></div></section>
+
 <section id="scResult" class="hidden">
   <div class="card">
     <div class="scorebig" id="resScore">0</div>
     <div class="scoresub" id="resSub"></div>
     <div class="reslist" id="resList"></div>
+    <div id="resRank" style="display:none;margin-top:16px;padding-top:15px;border-top:1px solid var(--line)"></div>
     <div id="resWrong"></div>
     <div class="row" style="margin-top:16px">
       <button class="btn" id="resRetry" style="flex:1">🔁 다시 풀기</button>
@@ -1684,12 +1699,48 @@ let best=store.get('best',{});
 /* =========================================================
    화면 전환
    ========================================================= */
-const SCREENS=['scHome','scLearn','scQuiz','scResult'];
+const SCREENS=['scHome','scLearn','scQuiz','scResult','scRank'];
 function show(id){SCREENS.forEach(s=>$(s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('footin').innerHTML='';return;}
   f.classList.remove('hidden');$('footin').innerHTML=html;}
 $('btnHome').onclick=goHome;
 function goHome(){stopTimer();show('scHome');foot('');renderHome();}
+
+/* ── 계급표 화면 ── */
+function openRank(){
+  if(!window.Rank)return;
+  const r=Rank.get(), log=Rank.history();
+  $('rankBody').innerHTML=`
+  <div class="card"><h2 style="font-size:17px;font-weight:800;margin-bottom:11px">🏆 계급표</h2>
+    ${Rank.card(r)}</div>
+  <div class="card">
+    <div class="sect" style="margin-top:0">계급 사다리</div>
+    <table class="rk-tbl">${Rank.tiers.map((t,i)=>{const nx=Rank.tiers[i+1];
+      return `<tr${i===r.tier.idx?' class="cur"':''}><td>${t.icon} <b style="color:${t.c}">${t.name}</b>${i===r.tier.idx?' <span class="note">← 현재</span>':''}</td>
+        <td>${t.min} ${nx?`~ ${nx.min-1}`:'이상'} RP</td></tr>`;}).join('')}</table>
+    <p class="note" style="margin-top:8px">골드부터는 세부 계급이 Ⅳ→Ⅰ로 나뉩니다.</p>
+  </div>
+  <div class="card">
+    <div class="sect" style="margin-top:0">RP 계산 방식</div>
+    <ul style="font-size:13.5px;margin:0;padding-left:19px">
+      <li><b class="hi">55점</b>이 본전. 그 위로는 오르고 아래로는 내려갑니다</li>
+      <li><b class="hi">100점</b>이면 퍼펙트 보너스 <b>+12 RP</b></li>
+      <li><b class="hi">3연승</b>부터 연승 보너스(최대 +15 RP)</li>
+      <li>떨어질 때는 최대 −22 RP까지만, 아이언·브론즈는 더 적게 깎입니다</li>
+    </ul>
+    <p class="note" style="margin-top:8px">최고 기록 ${r.bestRp} RP · 최다 연승 ${r.bestStreak}연승 · 총 ${r.plays}판</p>
+  </div>
+  ${log.length?`<div class="card"><div class="sect" style="margin-top:0">최근 기록</div>
+    <table class="rk-tbl"><tr><th>모드</th><th>점수</th><th>RP</th></tr>
+    ${log.slice(0,12).map(x=>`<tr><td style="font-size:12.5px">${x.m||'-'}</td><td>${x.s}점</td>
+      <td style="color:${x.g>=0?'var(--good)':'var(--bad)'};font-weight:800">${x.g>=0?'+':''}${x.g}</td></tr>`).join('')}
+    </table></div>`:''}
+  <div class="card"><button class="btn ghost" id="rkReset" style="width:100%">↺ 계급 초기화</button>
+    <p class="note" style="margin-top:7px">이 기기에만 저장됩니다. 초기화하면 되돌릴 수 없습니다.</p></div>`;
+  show('scRank'); foot(`<button class="btn" style="width:100%" onclick="goHome()">🏠 홈으로</button>`);
+  $('rkReset').onclick=()=>{ if(confirm('계급과 RP를 모두 초기화할까요?')){ Rank.reset(); openRank(); } };
+}
+document.addEventListener('click',e=>{ if(e.target&&e.target.id==='btnRank') openRank(); });
 
 /* =========================================================
    홈
@@ -1722,6 +1773,7 @@ function renderHome(){
   $('learnPill').textContent=`${done} / ${CHAPTERS.length}`;
   $('learnBar').style.width=(done/CHAPTERS.length*100)+'%';
   renderFab();
+  if(window.Rank){ $('rankCard').style.display='block'; $('rankCardIn').innerHTML=Rank.card(); }
   const list=$('chapList');list.innerHTML='';
   CHAPTERS.forEach((c,i)=>{
     const b=document.createElement('button');b.className='big';
@@ -2053,6 +2105,22 @@ function finish(){
   const key = g.mode==='exam' ? 'ex_'+examId : ({test:'test',mock:'mock',order:'g1',diag:'g2',calc:'g3'})[g.mode];
   const v=scored?score:correct;
   if(key&&(best[key]==null||v>best[key])){best[key]=v;store.set('best',best);}
+
+  // 계급(RP) 정산 — 모든 게임·테스트 공통. 백분율로 환산해서 넘긴다
+  let rk=null;
+  if(window.Rank){
+    const MODE={test:'빠른 점검',mock:'실전 모의고사',exam:'기출문제',order:'8대 공정 라인',diag:'설비 이상 진단',calc:'설비 계산소'};
+    try{ rk=Rank.award(pct,{mode:MODE[g.mode]||g.mode}); }catch(e){}
+  }
+  const rb=$('resRank');
+  if(rb){
+    rb.innerHTML = rk ? Rank.resultBox(rk) : '';
+    rb.style.display = rk ? 'block' : 'none';
+  }
+  if(rk&&rk.tierUp) setTimeout(()=>{
+    if(window.FX&&FX.banner)FX.banner({icon:rk.tierAfter.icon,title:`${rk.tierAfter.name} 승급!`,
+      sub:`${rk.after} RP`,stars:3,btn:'좋아'});
+  },900+total*55);
 
   // 오답노트
   const w=$('resWrong');
