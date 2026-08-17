@@ -406,6 +406,14 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
    ========================================================= */
 const $=id=>document.getElementById(id);
 const LS='sbm_v1_';
+/* 생기부 키워드용: 활동별 도전 횟수 (제출할 때마다 1씩 증가, 기기에 저장) */
+function bumpTry(mode){
+  const K=LS+'try';
+  let d={}; try{ d=JSON.parse(localStorage.getItem(K))||{}; }catch(e){}
+  d[mode]=(d[mode]||0)+1;
+  try{ localStorage.setItem(K,JSON.stringify(d)); }catch(e){}
+  return d[mode];
+}
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
@@ -2144,8 +2152,14 @@ function finish(){
   sb.style.display = (hasRC && scored) ? 'block' : 'none';
   sb.onclick=()=>{
     if(window.ResultCollector){
+      /* 생기부 키워드용: 활동명(mode)·도전 횟수(retry)·계급(tier) 을 함께 보냄 */
+      const modeName = MODE[g.mode] || g.mode || '학습';
       ResultCollector.open({score,correct,total,wrong:g.wrong.map(x=>x.n),durationSec:dur,
-        labels:{score:'점수',correct:'정답수',total:'총문항',rate:'정답률(%)',wrong:'오답번호'}});
+        mode: modeName,
+        retry: bumpTry(modeName),
+        tier: (function(){ try{ return Rank.get().tier.full; }catch(e){ return undefined; } })(),
+        labels:{score:'점수',correct:'정답수',total:'총문항',rate:'정답률(%)',wrong:'오답번호',
+                mode:'활동',retry:'도전횟수',tier:'계급'}});
     }else{alert('제출 기능은 선생님이 배포한 링크(?rc=...)로 열었을 때 작동합니다.');}
   };
 }
