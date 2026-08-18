@@ -2149,18 +2149,31 @@ function finish(){
   // 결과 제출(?rc= 링크로 열었을 때만)
   const sb=$('resSubmit');
   const hasRC=(window.ResultCollector&&ResultCollector.config&&ResultCollector.config.endpoint)||/[?&]rc=/.test(location.search);
-  sb.style.display = (hasRC && scored) ? 'block' : 'none';
+  sb.style.display = scored ? 'block' : 'none';   /* 제출 버튼은 링크가 아니어도 보인다 (규약 §1 ③) */
   sb.onclick=()=>{
+    if(!hasRC){
+      alert(['이 링크로는 제출이 되지 않아요.','',
+        '선생님이 나눠 준 제출용 링크(주소 뒤에 ?rc=... 가 붙은 링크)로',
+        '들어와야 반·번호를 입력하고 결과를 보낼 수 있습니다.','',
+        '연습은 지금 이대로 계속 하셔도 됩니다.'].join(String.fromCharCode(10)));
+      return;
+    }
     if(window.ResultCollector){
       /* 생기부 키워드용: 활동명(mode)·도전 횟수(retry)·계급(tier) 을 함께 보냄 */
-      const modeName = MODE[g.mode] || g.mode || '학습';
-      ResultCollector.open({score,correct,total,wrong:g.wrong.map(x=>x.n),durationSec:dur,
+      const MODE_NM={test:'단원 점검',mock:'모의고사',order:'순서 맞추기',diag:'고장 진단',calc:'계산 문제'};
+      const modeName = '반도체설비보전 — ' + (MODE_NM[g.mode] || MODE[g.mode] || g.mode || '학습');
+      /* 오답은 번호가 아니라 무엇을 틀렸는지 (규약 §1 ②) */
+      const shorten=(t,len)=>{t=String(t==null?'':t).replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+        return t.length>len?t.slice(0,len-1)+'\u2026':t;};
+      ResultCollector.open({score,correct,total,durationSec:dur,
         mode: modeName,
         retry: bumpTry(modeName),
         tier: (function(){ try{ return Rank.get().tier.full; }catch(e){ return undefined; } })(),
-        labels:{score:'점수',correct:'정답수',total:'총문항',rate:'정답률(%)',wrong:'오답번호',
+        wrong: g.wrong.map(x=>x.n+'\ubc88 '+shorten(x.q||'',20)+(x.a?(' \u2192 '+shorten(x.a,16)):'')),
+        extra: ['반도체 설비 보전 개념 이해'],
+        labels:{score:'점수',correct:'정답수',total:'총문항',rate:'정답률(%)',
                 mode:'활동',retry:'도전횟수',tier:'계급'}});
-    }else{alert('제출 기능은 선생님이 배포한 링크(?rc=...)로 열었을 때 작동합니다.');}
+    }
   };
 }
 
