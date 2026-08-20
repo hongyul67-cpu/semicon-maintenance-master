@@ -1,7 +1,8 @@
 # 교재 문항(bank_book.js) → 암호화(bank.enc)
 #
-#   python build_lock.py            # 기본 암호 hong-2281 로 빌드
-#   python build_lock.py --pw 새암호
+#   python build_lock.py --pw <암호>
+#
+# 암호를 스크립트에 적어 두지 않는다. 공개 저장소에 그대로 남기 때문이다.
 #
 # 왜 이렇게 하나:
 #   정적 호스팅(GitHub Pages)에서는 "화면에 비밀번호 입력칸"을 두어도 보호가 전혀 안 된다.
@@ -39,7 +40,7 @@ def extract_json(js_text):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--pw", default="hong-2281")
+    ap.add_argument("--pw", required=True)   # 기본값을 두면 공개 저장소에 암호가 그대로 남는다
     a = ap.parse_args()
 
     js = io.open(SRC, encoding="utf-8").read()

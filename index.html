@@ -318,7 +318,7 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
     <p class="note" style="margin-top:6px">교재에서 옮긴 문항은 <b>암호를 넣어야</b> 열립니다.
       풀리면 빠른 점검·실전 모의고사 출제에 함께 들어갑니다.</p>
     <div class="row" style="margin-top:10px">
-      <input id="lockPw" type="password" autocomplete="off" placeholder="암호"
+      <input id="lockPw" type="password" autocomplete="off" placeholder="이름번호 총 8자"
         style="flex:1;min-width:150px;background:#0d1622;border:1px solid var(--line);border-radius:11px;
                color:var(--ink);padding:11px 13px;font-size:14.5px;font-family:inherit">
       <button class="btn" id="lockGo">열기</button>
@@ -2251,7 +2251,9 @@ document.addEventListener('keydown',e=>{
    정적 호스팅에서는 화면 비밀번호가 보호가 안 되므로 파일 자체를 AES-GCM 으로 암호화해 둔다.
    여기서는 WebCrypto 로 실제 복호화한다. 암호가 틀리면 복호화 자체가 실패한다.
    ========================================================= */
-const LOCK_KEY='sbm_v1_pw';
+/* 저장 키를 도구마다 나누지 않고 하나로 쓴다. 도구가 모두 같은 주소에 있어
+   localStorage 가 공유되므로, 한 번 연 기기는 나머지 도구도 그냥 열린다. */
+const LOCK_KEY='hong_pw_v1';
 async function unlockBank(pw,quiet){
   const msg=$('lockMsg');
   const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
