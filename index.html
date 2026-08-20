@@ -2251,9 +2251,10 @@ document.addEventListener('keydown',e=>{
    정적 호스팅에서는 화면 비밀번호가 보호가 안 되므로 파일 자체를 AES-GCM 으로 암호화해 둔다.
    여기서는 WebCrypto 로 실제 복호화한다. 암호가 틀리면 복호화 자체가 실패한다.
    ========================================================= */
-/* 저장 키를 도구마다 나누지 않고 하나로 쓴다. 도구가 모두 같은 주소에 있어
-   localStorage 가 공유되므로, 한 번 연 기기는 나머지 도구도 그냥 열린다. */
-const LOCK_KEY='hong_pw_v1';
+/* 저장 키가 두 개다. LOCK_KEY 는 이 도구 것, SHARED_KEY 는 도구 전체 공용.
+   도구가 모두 같은 주소에 있어 localStorage 를 공유하므로 어디서든 한 번 열면 나머지도 열린다.
+   실패해도 공용 키는 지우지 않는다 — 여기서 안 맞는 암호가 다른 도구에서는 맞을 수 있다. */
+const LOCK_KEY='sbm_v1_pw', SHARED_KEY='hong_pw_v1';
 async function unlockBank(pw,quiet){
   const msg=$('lockMsg');
   const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
@@ -2275,13 +2276,13 @@ async function unlockBank(pw,quiet){
     const seen=new Set(BANK.map(dupKey));
     let added=0;
     rows.forEach(r=>{const k=dupKey(r);if(!seen.has(k)){BANK.push(r);seen.add(k);added++;}});
-    try{localStorage.setItem(LOCK_KEY,pw);}catch(e){}
+    try{localStorage.setItem(LOCK_KEY,pw);localStorage.setItem(SHARED_KEY,pw);}catch(e){}
     say(`✅ 교재 문항 ${added}개가 열렸습니다. 이제 문제은행 <b>${BANK.length}문항</b>에서 출제됩니다.`,'ok');
     $('lockPw').value='';renderHome();
     return true;
   }catch(e){
     say('암호가 맞지 않습니다.','bad');
-    try{localStorage.removeItem(LOCK_KEY);}catch(_){}
+    try{localStorage.removeItem(LOCK_KEY);}catch(_){}   // 공용 키는 건드리지 않는다
     return false;
   }
 }
@@ -2290,7 +2291,12 @@ $('lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')$('lockGo').click(
 /* 문항 수 표시 + 이전에 열었으면 자동 해제 */
 fetch('bank.enc',{cache:'no-store'}).then(r=>r.json()).then(b=>{$('lockN').textContent=b.n+'문항';})
   .catch(()=>{$('lockN').textContent='(준비 중)';});
-(function(){try{const pw=localStorage.getItem(LOCK_KEY);if(pw)unlockBank(pw,true);}catch(e){}})();
+/* 이 도구에서 쓰던 것 → 공용 것 순서로 조용히 시도한다 */
+(function(){try{
+  const a=localStorage.getItem(LOCK_KEY), b=localStorage.getItem(SHARED_KEY), t=[];
+  if(a)t.push(a); if(b&&b!==a)t.push(b);
+  (function next(i){ if(i>=t.length)return; unlockBank(t[i],true).then(ok=>{ if(!ok)next(i+1); }); })(0);
+}catch(e){}})();
 
 renderHome();
 </script>
