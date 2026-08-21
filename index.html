@@ -315,10 +315,10 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
   <div class="sect">🔒 교재 문제은행</div>
   <div class="card" id="lockCard" style="margin-bottom:10px">
     <div style="font-size:14.5px;font-weight:800">교재 문항 <span id="lockN">–</span></div>
-    <p class="note" style="margin-top:6px">교재에서 옮긴 문항은 <b>암호를 넣어야</b> 열립니다.
+    <p class="note" style="margin-top:6px">교재에서 옮긴 문항은 <b>암호나 이번 주 코드</b>를 넣어야 열립니다.
       풀리면 빠른 점검·실전 모의고사 출제에 함께 들어갑니다.</p>
     <div class="row" style="margin-top:10px">
-      <input id="lockPw" type="password" autocomplete="off" placeholder="이름번호 총 8자"
+      <input id="lockPw" type="password" autocomplete="off" placeholder="8자 · 이번 주 코드 또는 이름번호"
         style="flex:1;min-width:150px;background:#0d1622;border:1px solid var(--line);border-radius:11px;
                color:var(--ink);padding:11px 13px;font-size:14.5px;font-family:inherit">
       <button class="btn" id="lockGo">열기</button>
@@ -2255,18 +2255,54 @@ document.addEventListener('keydown',e=>{
    도구가 모두 같은 주소에 있어 localStorage 를 공유하므로 어디서든 한 번 열면 나머지도 열린다.
    실패해도 공용 키는 지우지 않는다 — 여기서 안 맞는 암호가 다른 도구에서는 맞을 수 있다. */
 const LOCK_KEY='sbm_v1_pw', SHARED_KEY='hong_pw_v1';
+/* bank.enc(v2) = 본문을 내용키(CK)로 한 번 암호화 + CK 를 암호마다 감싼 keys[]
+   모든 키가 같은 salt 를 쓰므로 PBKDF2 는 딱 1회, 그 뒤 keys 를 훑어 맞는 것을 찾는다.
+   교사용은 만료가 없고, 학생 코드는 그 주 월요일~다음 월요일 7일만 통한다.
+   기간은 암호문 '안에' 있어 화면이나 이 파일을 고쳐도 넘길 수 없다. */
+const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+const isoOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const mondayOf=d=>{const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;};
+const prettyCode=c=>c.slice(0,4)+' '+c.slice(4);
+let LOCK_INFO=null;
+
+async function findKey(kek, keys){
+  for(const k of keys){
+    try{
+      const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(k.iv)},kek,b64(k.blob));
+      return JSON.parse(new TextDecoder().decode(plain));
+    }catch(_){}
+  }
+  throw new Error('BADPW');
+}
+
+/* 교사용으로 열면 그 주 학생 코드를 계산해 보여 준다.
+   마스터 시크릿은 교사용으로 감싼 안쪽에만 있어 학생 코드로는 계산할 수 없다. */
+async function weekCode(msB64, mon){
+  const k=await crypto.subtle.importKey('raw',b64(msB64),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const sig=new Uint8Array(await crypto.subtle.sign('HMAC',k,
+    new TextEncoder().encode((LOCK_INFO.prefix||'HONGW|')+isoOf(mon))));
+  const n=((sig[0]<<24)>>>0)+(sig[1]<<16)+(sig[2]<<8)+sig[3];
+  return String(n%90000000+10000000);
+}
+
 async function unlockBank(pw,quiet){
   const msg=$('lockMsg');
   const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
   try{
     say('여는 중…');
     const blob=await (await fetch('bank.enc',{cache:'no-store'})).json();
-    const b64=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
     const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
-    const key=await crypto.subtle.deriveKey(
-      {name:'PBKDF2',salt:b64(blob.salt),iterations:blob.iter,hash:'SHA-256'},
+    const kek=await crypto.subtle.deriveKey(
+      {name:'PBKDF2',salt:b64(blob.kdf.salt),iterations:blob.kdf.iter,hash:'SHA-256'},
       base,{name:'AES-GCM',length:256},false,['decrypt']);
-    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(blob.nonce)},key,b64(blob.ct));
+    const info=await findKey(kek, blob.keys);
+    const today=isoOf(new Date());
+    if(info.nbf&&today<info.nbf){const e=new Error('NOTYET');e.when=info.nbf;throw e;}
+    if(info.exp&&today>=info.exp){const e=new Error('EXPIRED');e.when=info.exp;throw e;}
+    LOCK_INFO=info;
+    const ck=await crypto.subtle.importKey('raw',b64(info.ck),{name:'AES-GCM'},false,['decrypt']);
+    const sealed=b64(blob.data);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:sealed.slice(0,12)},ck,sealed.slice(12));
     // gzip 해제 (브라우저 내장 DecompressionStream)
     const ds=new DecompressionStream('gzip');
     const txt=await new Response(new Blob([plain]).stream().pipeThrough(ds)).text();
@@ -2276,20 +2312,31 @@ async function unlockBank(pw,quiet){
     const seen=new Set(BANK.map(dupKey));
     let added=0;
     rows.forEach(r=>{const k=dupKey(r);if(!seen.has(k)){BANK.push(r);seen.add(k);added++;}});
-    try{localStorage.setItem(LOCK_KEY,pw);localStorage.setItem(SHARED_KEY,pw);}catch(e){}
-    say(`✅ 교재 문항 ${added}개가 열렸습니다. 이제 문제은행 <b>${BANK.length}문항</b>에서 출제됩니다.`,'ok');
+    try{
+      localStorage.setItem(LOCK_KEY,pw);
+      if(!info.exp) localStorage.setItem(SHARED_KEY,pw);   // 만료되는 코드는 공용에 넣지 않는다
+    }catch(e){}
+    let extra='';
+    if(!quiet && info.role==='teacher' && info.ms){
+      const c=await weekCode(info.ms, mondayOf(new Date()));
+      extra=`<br><b style="color:var(--gold)">이번 주 학생 코드 — ${prettyCode(c)}</b>`;
+    }
+    say(`✅ 교재 문항 ${added}개가 열렸습니다. 이제 문제은행 <b>${BANK.length}문항</b>에서 출제됩니다.${extra}`,'ok');
     $('lockPw').value='';renderHome();
     return true;
   }catch(e){
-    say('암호가 맞지 않습니다.','bad');
+    const m=e&&e.message;
+    if(m==='EXPIRED')      say(`사용 기간이 끝난 코드입니다(${e.when}까지). 선생님께 이번 주 코드를 받으세요.`,'bad');
+    else if(m==='NOTYET')  say(`아직 쓸 수 없는 코드입니다. ${e.when}부터 쓸 수 있어요.`,'bad');
+    else                   say('암호가 맞지 않습니다.','bad');
     try{localStorage.removeItem(LOCK_KEY);}catch(_){}   // 공용 키는 건드리지 않는다
     return false;
   }
 }
-$('lockGo').onclick=()=>unlockBank($('lockPw').value.trim());
+$('lockGo').onclick=()=>unlockBank($('lockPw').value.replace(/\s+/g,''));
 $('lockPw').addEventListener('keydown',e=>{if(e.key==='Enter')$('lockGo').click();});
 /* 문항 수 표시 + 이전에 열었으면 자동 해제 */
-fetch('bank.enc',{cache:'no-store'}).then(r=>r.json()).then(b=>{$('lockN').textContent=b.n+'문항';})
+fetch('bank.enc',{cache:'no-store'}).then(r=>r.json()).then(b=>{$('lockN').textContent=(b.n||'')+'문항';})
   .catch(()=>{$('lockN').textContent='(준비 중)';});
 /* 이 도구에서 쓰던 것 → 공용 것 순서로 조용히 시도한다 */
 (function(){try{
