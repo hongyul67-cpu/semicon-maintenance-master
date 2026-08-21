@@ -36,7 +36,12 @@ button{font-family:inherit;cursor:pointer;border:none;color:inherit}
 /* 발문·퀴즈까지 열리면 아래가 길어진다 → 그림을 줄여 한 화면에 담는다 */
 #inner.compact .bfig{flex:0 1 auto;max-height:26vh}
 #inner.compact .bfig img{max-height:24vh}
-#inner.compact .bpts li{font-size:clamp(14px,1.15vw,22px);padding:min(0.9vh,10px) 15px}
+.bl{display:inline-block;min-width:3.4em;padding:0 .35em;margin:0 .12em;border-radius:6px;
+    background:#1d3350;border-bottom:3px solid #7fc4ff;color:transparent;cursor:pointer;
+    font-weight:800;user-select:none}
+  .bl.on{background:rgba(127,196,255,.16);color:#9fe0ff;border-bottom-color:#9fe0ff;cursor:default}
+  .bsvg{background:#fff;border-radius:12px;padding:10px}
+  .bpts li{font-size:clamp(14px,1.15vw,22px);padding:min(0.9vh,10px) 15px}
 #inner.compact .bcap{display:none}
 @media (max-height:820px){
   .bpts li{font-size:clamp(14px,1.25vw,24px);padding:min(1vh,11px) 15px}
@@ -210,6 +215,15 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
    획을 배열로 들고 있다가 크기가 바뀌면 다시 그린다(되돌리기도 같은 배열로 처리). */
 const pad=$('pad'), ctx=pad.getContext('2d');
 let strokes=[], cur=null, tool='none', color='#ff4d4f';
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(t && t.classList && t.classList.contains('bl')) t.classList.add('on');
+});
+function blanks(x){
+  return String(x).replace(/\{\{(.+?)\}\}/g, function(_, a){
+    return '<span class="bl" tabindex="0">' + a + '</span>';
+  });
+}
 function fit(){
   const r=devicePixelRatio||1;
   pad.width=innerWidth*r; pad.height=innerHeight*r;
@@ -294,14 +308,16 @@ function render(){
     $('bStep').textContent='—'; $('bStep').disabled=true; return;
   }
   $('bStep').disabled=false;
+  /* 본문의 {{답}} 은 빈칸 — 눌러야 답이 드러난다 */
   if(mode==='lesson'){
     const s=(window.LESSON||[])[i]; if(!s)return;
     inner.classList.toggle('compact', step>=2);
     $('hTitle').textContent=s.t; $('hIdx').textContent=`${i+1} / ${total()}`;
     inner.innerHTML=`
       ${s.img?`<div class="bfig"><img src="img/${s.img}" alt=""></div>`:''}
+      ${s.svg?`<div class="bfig bsvg">${s.svg}</div>`:''}
       ${s.cap?`<div class="bcap">${s.cap}</div>`:''}
-      <ul class="bpts">${s.pts.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <ul class="bpts">${s.pts.map(x=>`<li>${blanks(x)}</li>`).join('')}</ul>
       <div class="bask ${step<1?'veil':''}">💭 ${s.ask}</div>
       <div class="${step<2?'veil':''}" style="flex-shrink:0">
         <div class="bq" style="margin-bottom:10px">🎯 ${s.ansq}</div>
