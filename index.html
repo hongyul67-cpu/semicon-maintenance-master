@@ -213,6 +213,20 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .footin{max-width:960px;margin:0 auto;display:flex;gap:9px}
 .footin .btn{flex:1;text-align:center}
 
+/* 전자칠판(bp-open)은 z-index 99000 인데 공용 떠있는 단추는 그보다 높아 슬라이드 위에 떠 있었다.
+   20번 슬라이드에서는 「📋 평가 기준」이 보기 하나를 덮었다 — 수업 중에는 모두 숨긴다. */
+body.bp-open .tr-btn,
+body.bp-open #rb-btn,
+body.bp-open .cm-launch,
+body.bp-open #bb-btn,
+body.bp-open #fxSnd,
+body.bp-open #rk-badge{display:none !important}
+
+/* 전자칠판: 요점이 7줄인 슬라이드 9장이 1920×1080에서 33~37px 넘쳐 스크롤이 생겼다.
+   정답까지 연 상태(compact)에서 요점 줄 간격만 줄여 한 화면에 담는다. */
+#bp-in.compact .bp-pts{gap:min(.6vh,6px) !important}
+#bp-in.compact .bp-pts li{padding-top:min(.5vh,5px) !important;padding-bottom:min(.5vh,5px) !important}
+
 @media (max-width:520px){
   .stn .sl{font-size:8.5px}
   .lcard h3{font-size:16.5px}
@@ -296,13 +310,17 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
     타이머 · 번호 뽑기 · 가리개 포함. 교재 도해를 요점 → <b>발문</b> → 즉석 퀴즈로 진행합니다.</div></button>
 
   <div class="sect">📜 4단계 · 기출문제 풀어보기</div>
+  <label class="note" style="display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:12.5px;color:var(--dim)">
+    <input type="checkbox" id="examMix" checked> 문제·보기 순서 섞기</label>
+  <div class="note" id="examMixNote" style="margin:-4px 0 12px;font-size:11.5px;color:var(--dim2);line-height:1.6"></div>
   <div id="examList"></div>
 
   <p class="note" style="margin-top:18px;color:var(--dim2);font-size:11.5px">
     ※ 단원 구성은 이 종목 표준 문제집의 10개 Part(반도체 입문 / 사진 / 식각 / 확산 / CVD·PVD·ALD /
     세정과 CMP / 조립 / 자동화 / 공유압 / 안전관리)와 공개 직무모형에 맞췄습니다.
-    <b>수록 문항은 개념을 바탕으로 직접 만든 것이며, 실제 기출문항은 아직 포함되어 있지 않습니다.</b>
-    기출·교재 자료를 확보하면 문제은행에 추가됩니다.
+    <b>「빠른 점검·실전 모의고사」에 나오는 문항은 개념을 바탕으로 직접 만든 것</b>이고,
+    <b>「기출문제 풀어보기」의 170문항(2014·2015 각 60 + 실전 모의 50)과 교재 문제은행 608문항은
+    실제 출제·교재 문항</b>입니다.
   </p>
 </section>
 
@@ -811,7 +829,7 @@ const CHAPTERS=[
   tip:'"압력이 안 내려간다 / 파티클이 늘었다 / RF 반사파가 튄다" — 이 세 가지가 시험과 현장에서 제일 자주 나오는 <b>증상</b>입니다. 게임 「설비 이상 진단실」에서 연습하세요.'},
 ]},
 
-{id:'c4',icon:'🛠️',title:'설비보전 이론',sub:'시험 배점이 가장 큰 핵심 단원',cards:[
+{id:'c4',icon:'🛠️',title:'설비보전 이론',sub:'예방·사후·개량보전의 뼈대',cards:[
  {h:'보전의 4가지 이름',lead:'언제 손대느냐로 갈린다',
   body:`<table>
    <tr><th>이름</th><th>언제</th><th>한마디</th></tr>
@@ -1156,8 +1174,8 @@ const WEIGHT={
      추정이 아니라 교재가 실제로 그렇게 배분해 놓았다. */
   c1:4,   /* 반도체 입문 55문 */
   c2:1,   /* 8대 공정 흐름 (도구 자체 단원) */
-  c11:4,  /* 사진공정 63문 */
-  c12:5,  /* 식각공정 57문 */
+  c11:5,  /* 사진공정 63문 — 공정 중 가장 많다 */
+  c12:4,  /* 식각공정 57문 */
   c13:5,  /* 산화확산 41 + 이온주입 21 = 62문 */
   c14:4,  /* CVD·PVD 62문 */
   c15:4,  /* CMP·세정 60문 */
@@ -1656,8 +1674,36 @@ let best=store.get('best',{});
    ========================================================= */
 const SCREENS=['scHome','scLearn','scQuiz','scResult','scRank'];
 function show(id){SCREENS.forEach(s=>$(s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
-function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('footin').innerHTML='';return;}
-  f.classList.remove('hidden');$('footin').innerHTML=html;}
+function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('footin').innerHTML='';liftFloats();return;}
+  f.classList.remove('hidden');$('footin').innerHTML=html;liftFloats();}
+
+/* 아래쪽 고정 버튼 줄(.footbar)이 떠 있을 때, 화면 구석의 공용 떠있는 단추
+   (🧹기록 초기화·← 뒤로·📋평가 기준·🎓수업모드·🔇소리)를 그 위로 올린다.
+   올리지 않으면 1180px 아래 화면에서 「다음 문제」 자리에 포개져
+   오른쪽 끝을 누르면 수업모드가, 왼쪽 끝을 누르면 기록 초기화가 눌린다. */
+function liftFloats(){
+  if(document.body.classList.contains('cm-on'))return;   /* 수업모드는 class-mode.js 몫 */
+  const bar=$('footbar');
+  const on = bar && !bar.classList.contains('hidden');
+  /* 버튼 줄이 있으면 그 위에서, 없으면 화면 맨 아래에서 위로 쌓는다 */
+  const base = on ? Math.round(bar.getBoundingClientRect().height)+10 : 12;
+  const column = sels => {
+    let up = base;
+    sels.forEach(sel=>{
+      const el=document.querySelector(sel); if(!el) return;
+      el.style.setProperty('bottom', up+'px', 'important');
+      up += Math.round(el.getBoundingClientRect().height) + 8;
+    });
+  };
+  column(['.tr-btn','#bb-btn','#rb-btn']);        /* 왼쪽 아래 */
+  column(['.cm-launch','#fxSnd','#rk-badge']);    /* 오른쪽 아래 */
+}
+/* 공용 단추는 늦게 붙고, 창 크기가 바뀌면 스스로 자리를 다시 잡는다 —
+   그 뒤에 한 번 더 올려 준다 */
+window.addEventListener('resize', ()=>setTimeout(liftFloats,80));
+window.addEventListener('load',   ()=>setTimeout(liftFloats,300));
+setTimeout(liftFloats,900);
+setTimeout(liftFloats,2600);
 $('btnHome').onclick=goHome;
 function goHome(){stopTimer();show('scHome');foot('');renderHome();}
 
@@ -1743,11 +1789,18 @@ function renderHome(){
   const el=$('examList');
   if(el&&window.EXAMS){
     el.innerHTML='';
+    const mixBox=$('examMix'),mixNote=$('examMixNote');
+    if(mixBox&&!mixBox.dataset.set){
+      mixBox.dataset.set='1';mixBox.checked=!fixMode();
+      if(mixNote)mixNote.innerHTML=fixMode()
+        ? '🎓 <b>수업용 링크</b>로 들어왔습니다. 꺼 두면 교재 번호 그대로라 «12번 보세요» 가 그대로 통합니다. 켜더라도 오늘 이 링크로 들어온 학생은 모두 같은 순서를 받습니다.'
+        : '회차에 든 문제는 그대로이고 나오는 <b>차례</b>와 <b>보기 차례</b>만 바뀝니다. 같은 회차를 다시 풀어도 «정답은 3번» 을 외우게 되지 않습니다.';
+    }
     EXAMS.forEach(ex=>{
       const b=document.createElement('button');b.className='big';
       const bk=best['ex_'+ex.id];
       b.innerHTML=`<div class="bt">📜 ${ex.title} ${bk!=null?`<span class="pill" style="color:var(--gold);border-color:var(--gold)">최고 ${bk}점</span>`:''}</div>
-        <div class="bd">${ex.sub} · 실제 출제된 문항 그대로. 보기 순서도 원본 그대로입니다.</div>`;
+        <div class="bd">${ex.sub} · 실제 출제된 문항 그대로. 나오는 차례는 위 스위치로 정합니다.</div>`;
       b.onclick=()=>startExam(ex.id);
       el.appendChild(b);
     });
@@ -1877,7 +1930,7 @@ function startOrder(){
 }
 function renderOrder(){
   $('qcard').innerHTML=`
-    <div class="qhead"><span>🧩 8대 공정 라인 세우기</span><span>${ord.picked.length} / 8</span></div>
+    <div class="qhead"><span>🧩 8대 공정 라인 세우기</span><span id="ordCnt">${ord.picked.length} / 8</span></div>
     <div class="qtext">웨이퍼가 지나가는 <b>순서대로</b> 공정을 눌러 라인을 세우세요.</div>
     <div class="slots" id="slots"></div>
     <div class="chips" id="chips"></div>
@@ -1887,6 +1940,7 @@ function renderOrder(){
   $('qquit').onclick=goHome;
 }
 function drawOrder(){
+  const cnt=$('ordCnt'); if(cnt) cnt.textContent = ord.picked.length + ' / ' + STEPS.length;
   $('slots').innerHTML = ord.picked.length
     ? ord.picked.map((s,i)=>`<div class="slot"><i>${i+1}</i>${s.e} ${s.n}</div>`).join('')
     : '<span class="note" style="padding:4px 6px">첫 번째 공정부터 눌러 보세요</span>';
@@ -1903,6 +1957,7 @@ function pickOrder(s,btn){
   const want=STEPS[ord.picked.length];
   if(s===want){
     ord.picked.push(s);g.correct++;window.FX&&FX.ok(btn);drawOrder();
+    $('expwrap').innerHTML='';   /* 맞히면 앞서 뜬 오답 안내를 지운다 */
     if(ord.picked.length===STEPS.length){
       $('expwrap').innerHTML=`<div class="exp"><b>라인 완성!</b> 웨-산-포-식-증-금-이-패. 가운데 포토·식각·증착은 실제로 수십 번 반복됩니다.</div>`;
       setTimeout(()=>{g.i=1;finish();},700);
@@ -2003,12 +2058,45 @@ function pickWeighted(total){
   });
 }
 function startTest(){beginQuiz('test',pickWeighted(20));}
-/* 기출은 보기 순서를 섞지 않는다 — 실제 시험 그대로 재현하는 것이 목적 */
-let examId=null;
-function startExam(id){
+/* ── 기출 회차 안에서 섞기 ─────────────────────────────────
+   회차에 든 문제는 그대로 두고 «나오는 차례»와 «보기 차례»만 바꾼다.
+   수업용 링크(?fix=…)로 들어오면 fixorder.js 가 켜지고, 이때는 기본이 «섞지 않음» —
+   교재 번호가 그대로라 "12번 보세요" 가 통한다. 켜더라도 그날 시드로 우리끼리
+   난수를 만들어 쓰므로 학생 전원이 같은 순서를 받는다. */
+function fixMode(){return !!(window.FixOrder&&window.FixOrder.on);}
+function mixRnd(seedKey){
+  if(!fixMode())return Math.random;
+  let h=2166136261;const k=String(seedKey);
+  for(let i=0;i<k.length;i++){h^=k.charCodeAt(i);h=(h*16777619)>>>0;}
+  let a=((window.FixOrder.seed>>>0)^h)>>>0;
+  return function(){a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+}
+function shuffledBy(arr,rnd){const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor((rnd||Math.random)()*(i+1));const t=a[i];a[i]=a[j];a[j]=t;}
+  return a;}
+/* 보기를 섞으면 안 되는 문항 — 문제·보기에 ①~④ 가 적혀 있거나 «위 모두 옳다» 류 */
+const CIRCLED=/[①②③④]/, AGGREG=/모두 (옳|맞|정답|해당)|위 모두|위의 모두|정답이 없|해당 없/;
+const CNUM=['','①','②','③','④'];
+function mixOpts(x,rnd){
+  if(CIRCLED.test(x.q||'')||x.o.some(o=>CIRCLED.test(o)||AGGREG.test(o)))return x;
+  const ord=shuffledBy(x.o.map((_,i)=>i),rnd);        // ord[새자리]=옛자리
+  const to=[];ord.forEach((old,now)=>{to[old]=now;}); // to[옛자리]=새자리
+  return Object.assign({},x,{
+    o:ord.map(i=>x.o[i]), a:to[x.a],
+    /* 해설이 «원문 기준 ④가 틀림» 처럼 번호를 짚는 곳이 있어 함께 옮긴다 */
+    e:String(x.e||'').replace(/[①②③④]/g,ch=>CNUM[to[CNUM.indexOf(ch)-1]+1])
+  });
+}
+let examId=null,examMixOn=false;
+function startExam(id,mix){
   const ex=EXAMS.find(x=>x.id===id);if(!ex)return;
   examId=id;
-  beginQuiz('exam',ex.q.map(x=>({q:x.q,o:x.o.slice(),a:x.a,e:x.e,img:x.img})));
+  const box=$('examMix');
+  examMixOn = (mix==null) ? !!(box&&box.checked) : !!mix;
+  let list=ex.q.map(x=>({q:x.q,o:x.o.slice(),a:x.a,e:x.e,img:x.img}));
+  if(examMixOn){const rnd=mixRnd(id);list=shuffledBy(list,rnd).map(x=>mixOpts(x,rnd));}
+  beginQuiz('exam',list);
 }
 function startMock(){beginQuiz('mock',pickWeighted(60));}
 
@@ -2090,7 +2178,7 @@ function finish(){
   }
 
   $('resRetry').onclick=()=>{
-    if(g.mode==='exam')startExam(examId);
+    if(g.mode==='exam')startExam(examId,examMixOn);
     else ({test:startTest,mock:startMock,order:startOrder,diag:startDiag,calc:startCalc})[g.mode]();
   };
   $('resHome').onclick=goHome;
