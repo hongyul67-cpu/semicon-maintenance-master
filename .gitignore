@@ -1,2 +1,8 @@
 # 교재 원문 문항 — 절대 커밋하지 말 것 (bank.enc 로 암호화해서만 배포)
 bank_book.js
+
+# 교재에서 크롭한 그림 원본 — 절대 커밋하지 말 것
+# (enc/*.enc 로 암호화해서만 배포한다. build_lock.py 가 굽는다)
+img/
+
+__pycache__/

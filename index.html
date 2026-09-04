@@ -235,6 +235,12 @@ body.bp-open #rk-badge{display:none !important}
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
 }
+
+/* 교재 크롭 그림 — 잠금을 풀기 전 자리표시 */
+img[data-enc]:not([src]){min-height:120px;background:
+  repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 10px,transparent 10px 20px);
+  border:1px dashed var(--dim,#888);border-radius:8px;display:block}
+img.encfail{border-color:var(--bad,#e66)}
 </style>
 </head>
 <body>
@@ -1830,7 +1836,7 @@ function renderLearn(){
     <h3>${card.h}</h3>
     <div class="lead">${card.lead}</div>
     <div class="lbody">${card.body}</div>
-    ${(card.fig||[]).map(f=>`<figure class="lfig"><img src="img/${f[0]}" alt="${f[1]}" loading="lazy"><figcaption>${f[1]}</figcaption></figure>`).join('')}
+    ${(card.fig||[]).map(f=>`<figure class="lfig"><img data-enc="${f[0]}" alt="${f[1]}" loading="lazy"><figcaption>${f[1]}</figcaption></figure>`).join('')}
     ${card.tip?`<div class="tipbox">💡 ${card.tip}</div>`:''}`;
   $('ldots').innerHTML=ch.cards.map((_,i)=>`<div class="dot ${i<=lc.pi?'on':''}"></div>`).join('');
   const last=lc.pi===ch.cards.length-1;
@@ -1897,7 +1903,7 @@ function renderMCQ(){
     <div class="qhead"><span>${({test:'🎯 빠른 점검',mock:'🏁 실전 모의고사',exam:'📜 기출문제',diag:'🚨 이상 진단'})[g.mode]||''} ${g.i+1} / ${g.items.length}</span>
       <span>맞은 개수 ${g.correct}</span></div>
     <div class="qtext">${it.q||it.s}</div>
-    ${it.img?`<div class="qfig"><img src="img/${it.img}" alt="문제 그림" loading="lazy"></div>`:''}
+    ${it.img?`<div class="qfig"><img data-enc="${it.img}" alt="문제 그림" loading="lazy"></div>`:''}
     <div id="opts"></div><div id="expwrap"></div>`;
   const ow=$('opts');
   it.o.forEach((o,idx)=>{
@@ -2224,13 +2230,16 @@ function finish(){
    같이 없어진 것: 좌우 스와이프로 넘기기 — 큰 화면에서 판서하다 손이 스치면
    슬라이드가 넘어가 버려서, 넘기기는 단추와 ← → 키만 듣도록 통일했다.
    ========================================================= */
-function openBoard(){
+async function openBoard(){
   if(!window.BoardPro){ alert('수업 도구를 불러오지 못했습니다.'); return; }
   const L = window.LESSON || [];
   const quiz = [];
   (window.EXAMS || []).forEach(ex => (ex.q || []).forEach(q => quiz.push({
-    q:q.q, o:q.o, a:q.a, e:q.e, img:q.img ? 'img/' + q.img : '', src:ex.title
+    q:q.q, o:q.o, a:q.a, e:q.e, img:q.img || '', src:ex.title
   })));
+  /* board-pro.js 는 문제 화면에서 s.img 를 src 로 그대로 쓴다(공용 사본이라 고치지 않는다).
+     그래서 넘기기 전에 여기서 미리 풀어 blob 주소로 바꿔 준다. */
+  await Promise.all(quiz.filter(q=>q.img).map(q=>encUrl(q.img).then(u=>{q.img=u;})));
   const menu = [
     { icon:'📊', title:'개념 슬라이드',
       desc:'교재 도해 ' + L.length + '장. 요점 → 발문 → 퀴즈 → 정답을 하나씩 열며 진행합니다.',
@@ -2248,7 +2257,7 @@ function openBoard(){
         '화면 어디든 손이나 펜으로 바로 쓸 수 있고, 요점 속 <b>파란 빈칸</b>은 눌러야 답이 보입니다.',
     menu: menu,
     /* 그림은 원고에 파일 이름만 있고 실제 파일은 img/ 아래에 있다 */
-    fig: s => s.svg ? s.svg : (s.img ? '<img src="img/' + s.img + '" alt="">' : '')
+    fig: s => s.svg ? s.svg : (s.img ? '<img data-enc="' + s.img + '" alt="">' : '')
   });
 }
 
@@ -2291,6 +2300,49 @@ async function weekCode(msB64, mon){
   return String(n%90000000+10000000);
 }
 
+/* ── 교재 크롭 그림 ────────────────────────────────────────────────
+   교재에서 크롭한 그림이라 평문으로 올리지 않는다. enc/*.enc 로 굽고
+   여기서 잠금을 푼 뒤에만 받아서 화면에 채운다(bank.enc 와 같은 키).
+   <img data-enc="이름.jpg"> 로 두면 fillEnc() 가 채운다.            */
+let ENC_CK=null;
+const ENC_CACHE={};
+function encImg(el){
+  const nm=el.getAttribute('data-enc');
+  if(!nm) return;
+  if(ENC_CACHE[nm]){el.src=ENC_CACHE[nm];return;}
+  if(!ENC_CK){el.classList.add('encwait');return;}   // 아직 안 열림 - 조용히 자리만
+  fetch('enc/'+encodeURIComponent(nm)+'.enc',{cache:'force-cache'})
+    .then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
+    .then(buf=>{const u=new Uint8Array(buf);
+      return crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},ENC_CK,u.slice(12));})
+    .then(plain=>{const url=URL.createObjectURL(new Blob([plain]));
+      ENC_CACHE[nm]=url; el.src=url; el.classList.remove('encwait');})
+    .catch(()=>{el.classList.add('encfail');el.alt='그림을 열지 못했습니다 ('+nm+')';});
+}
+function encUrl(nm){                     // 이름 → blob URL (전자칠판처럼 미리 필요할 때)
+  if(!nm) return Promise.resolve('');
+  if(ENC_CACHE[nm]) return Promise.resolve(ENC_CACHE[nm]);
+  if(!ENC_CK) return Promise.resolve('');
+  return fetch('enc/'+encodeURIComponent(nm)+'.enc',{cache:'force-cache'})
+    .then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();})
+    .then(buf=>{const u=new Uint8Array(buf);
+      return crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},ENC_CK,u.slice(12));})
+    .then(plain=>{const url=URL.createObjectURL(new Blob([plain]));ENC_CACHE[nm]=url;return url;})
+    .catch(()=>'');
+}
+function fillEnc(root){
+  (root||document).querySelectorAll('img[data-enc]:not([src])').forEach(encImg);
+}
+/* 화면은 여러 곳에서 다시 그려진다. 그릴 때마다 부르는 대신 새로 생긴 것을 자동으로 잡는다
+   (부르는 곳을 하나라도 빠뜨리면 그 화면만 그림이 안 나오는 사고가 난다) */
+new MutationObserver(ms=>{
+  for(const m of ms) for(const n of m.addedNodes){
+    if(n.nodeType!==1) continue;
+    if(n.matches&&n.matches('img[data-enc]:not([src])')) encImg(n);
+    else if(n.querySelectorAll) fillEnc(n);
+  }
+}).observe(document.documentElement,{childList:true,subtree:true});
+
 async function unlockBank(pw,quiet){
   const msg=$('lockMsg');
   const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
@@ -2307,6 +2359,8 @@ async function unlockBank(pw,quiet){
     if(info.exp&&today>=info.exp){const e=new Error('EXPIRED');e.when=info.exp;throw e;}
     LOCK_INFO=info;
     const ck=await crypto.subtle.importKey('raw',b64(info.ck),{name:'AES-GCM'},false,['decrypt']);
+    ENC_CK=ck;                      // 교재 크롭 그림도 같은 키로 푼다
+    setTimeout(()=>fillEnc(),0);    // 이미 그려진 화면의 그림 채우기
     const sealed=b64(blob.data);
     const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:sealed.slice(0,12)},ck,sealed.slice(12));
     // gzip 해제 (브라우저 내장 DecompressionStream)

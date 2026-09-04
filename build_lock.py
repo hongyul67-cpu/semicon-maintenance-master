@@ -19,7 +19,7 @@
 #
 # 주의: 평문 bank_book.js 는 .gitignore 에 있다. 절대 커밋하지 말 것.
 #       암호를 이 스크립트에 적어 두지 말 것 - 공개 저장소에 그대로 남는다.
-import io, os, re, json, gzip, base64, argparse, sys, secrets
+import io, os, re, json, gzip, base64, argparse, sys, secrets, shutil
 from datetime import date
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -31,6 +31,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "_weekly"))
 import weekly                                   # 도구 공용 주간 코드
 SRC = os.path.join(HERE, "bank_book.js")
 OUT = os.path.join(HERE, "bank.enc")
+IMGDIR = os.path.join(HERE, "img")     # 교재 크롭 원본 (평문 - .gitignore)
+ENCDIR = os.path.join(HERE, "enc")     # 배포되는 암호화본
 ITER = 200_000
 
 
@@ -112,6 +114,35 @@ def main():
         "data": base64.b64encode(body).decode(),
         "keys": keys,
     }))
+
+    # 3) 교재에서 크롭한 그림 - 같은 CK 로 한 장씩 (화면에서 필요할 때만 받아서 푼다)
+    #    코드가 실제로 참조하는 것만 굽는다. 안 쓰는 크롭까지 올릴 이유가 없다.
+    used = set()
+    for fn in ("lesson.js", "exams.js"):
+        fp = os.path.join(HERE, fn)
+        if os.path.exists(fp):
+            used |= set(re.findall(r"img:'([^']+)'", io.open(fp, encoding="utf-8").read()))
+    used |= set(re.findall(r"\['([A-Za-z0-9._-]+\.jpg)'",
+                          io.open(os.path.join(HERE, "index.html"), encoding="utf-8").read()))
+
+    if os.path.isdir(ENCDIR):
+        shutil.rmtree(ENCDIR)
+    os.makedirs(ENCDIR)
+    tin = tout = 0
+    missing = []
+    for nm in sorted(used):
+        src = os.path.join(IMGDIR, nm)
+        if not os.path.exists(src):
+            missing.append(nm); continue
+        b = io.open(src, "rb").read()
+        n2 = secrets.token_bytes(12)
+        out = n2 + AESGCM(CK).encrypt(n2, b, None)       # bank.enc 와 같은 방식
+        io.open(os.path.join(ENCDIR, nm + ".enc"), "wb").write(out)
+        tin += len(b); tout += len(out)
+    print("  그림 %d장 · 원본 %.1fMB -> enc/ %.1fMB"
+          % (len(used) - len(missing), tin / 1048576, tout / 1048576))
+    if missing:
+        print("  ⚠ img/ 에 없는 그림: " + ", ".join(missing))
 
     cur = weekly.this_week(cfg)
     print("  문항 %d개 · 원본 %dKB -> gzip %dKB -> bank.enc %dKB"
