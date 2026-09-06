@@ -6,3 +6,6 @@ bank_book.js
 img/
 
 __pycache__/
+
+# 기출 원문 — 절대 커밋하지 말 것 (exams.enc 로 암호화해서만 배포)
+exams.js

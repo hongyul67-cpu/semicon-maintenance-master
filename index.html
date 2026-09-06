@@ -14,8 +14,10 @@
 <script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>
 <!-- 계급(아이언~마스터) · 랭크 포인트 -->
 <script src="https://hongyul67-cpu.github.io/links/rank.js" data-tool="반도체설비보전 필기" data-pace="class"></script>
-<!-- 기출문제 데이터 -->
-<script src="exams.js"></script>
+<!-- 기출문제 데이터 — 평문으로 올리지 않는다.
+     국가기술자격 기출이지만 전사 출처가 교재(제2편 문제편)라 exams.enc 로 굽고,
+     잠금을 푼 뒤에 unlockBank() 가 채운다(bank.enc 와 같은 키). -->
+<script>window.EXAMS = [];</script>
 <!-- 수업 슬라이드 -->
 <script src="lesson.js"></script>
 <!-- 전자칠판 수업 도구 — 예전 board.html 이 index 안으로 들어왔습니다.
@@ -1793,7 +1795,13 @@ function renderHome(){
   });
   // 기출 회차 카드
   const el=$('examList');
-  if(el&&window.EXAMS){
+  if(el&&window.EXAMS&&!window.EXAMS.length){
+    /* 아직 안 열렸다 — 빈 칸만 두면 고장난 줄 안다. 왜 비었는지 적어 준다. */
+    el.innerHTML='<div class="bd" style="padding:10px 2px;color:var(--dim)">'
+      + '🔒 기출 회차는 <b>암호를 넣어야</b> 열립니다. 아래 잠금 칸에 '
+      + '이번 주 학생 코드나 교사용 암호를 넣으세요.</div>';
+  }
+  if(el&&window.EXAMS&&window.EXAMS.length){
     el.innerHTML='';
     const mixBox=$('examMix'),mixNote=$('examMixNote');
     if(mixBox&&!mixBox.dataset.set){
@@ -2343,6 +2351,26 @@ new MutationObserver(ms=>{
   }
 }).observe(document.documentElement,{childList:true,subtree:true});
 
+/* ── 기출 문항 ────────────────────────────────────────────────────
+   exams.enc = 기출 배열을 gzip 한 뒤 bank.enc 와 같은 내용키(CK)로 암호화한 것.
+   앞 12바이트가 nonce 다(enc/*.enc 와 같은 모양).
+   한 번 열면 window.EXAMS 에 채워지고 홈 화면의 회차 카드가 생긴다.       */
+async function loadExams(ck){
+  if(window.EXAMS && window.EXAMS.length) return true;   // 이미 열려 있다
+  try{
+    const buf=await (await fetch('exams.enc',{cache:'no-store'})).arrayBuffer();
+    const u=new Uint8Array(buf);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:u.slice(0,12)},ck,u.slice(12));
+    const ds=new DecompressionStream('gzip');
+    const txt=await new Response(new Blob([plain]).stream().pipeThrough(ds)).text();
+    window.EXAMS=JSON.parse(txt);
+    return true;
+  }catch(e){
+    console.warn('기출을 열지 못했습니다', e);
+    return false;                                        // 교재 문항은 그대로 열린다
+  }
+}
+
 async function unlockBank(pw,quiet){
   const msg=$('lockMsg');
   const say=(t,c)=>{if(!quiet||c==='bad'){msg.innerHTML=t;msg.style.color=c==='bad'?'var(--bad)':(c==='ok'?'var(--good)':'var(--dim)');}};
@@ -2361,6 +2389,7 @@ async function unlockBank(pw,quiet){
     const ck=await crypto.subtle.importKey('raw',b64(info.ck),{name:'AES-GCM'},false,['decrypt']);
     ENC_CK=ck;                      // 교재 크롭 그림도 같은 키로 푼다
     setTimeout(()=>fillEnc(),0);    // 이미 그려진 화면의 그림 채우기
+    await loadExams(ck);            // 기출도 같은 키로 연다 (없어도 교재 문항은 열린다)
     const sealed=b64(blob.data);
     const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:sealed.slice(0,12)},ck,sealed.slice(12));
     // gzip 해제 (브라우저 내장 DecompressionStream)

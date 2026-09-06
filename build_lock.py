@@ -31,17 +31,22 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "_weekly"))
 import weekly                                   # 도구 공용 주간 코드
 SRC = os.path.join(HERE, "bank_book.js")
 OUT = os.path.join(HERE, "bank.enc")
+EXSRC = os.path.join(HERE, "exams.js")     # 기출 원문 (평문 - .gitignore)
+EXOUT = os.path.join(HERE, "exams.enc")    # 배포되는 암호화본 (bank.enc 와 같은 키)
 IMGDIR = os.path.join(HERE, "img")     # 교재 크롭 원본 (평문 - .gitignore)
 ENCDIR = os.path.join(HERE, "enc")     # 배포되는 암호화본
 ITER = 200_000
 
 
-def extract_json(js_text):
-    """bank_book.js 의 배열 리터럴만 뽑아 JSON 으로 바꾼다 (node 로 평가해서 안전하게)."""
+def extract_json(js_text, var="BOOK_BANK"):
+    """js 파일의 배열 리터럴만 뽑아 JSON 으로 바꾼다 (node 로 평가해서 안전하게).
+
+    `window.X = X` 로 내보내는 줄은 node 에 window 가 없어 죽으므로 먼저 지운다."""
     import subprocess, tempfile
+    body = re.sub(r"if\s*\(\s*typeof\s+window[^\n]*window\.\w+\s*=\s*\w+\s*;?", "", js_text)
     with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
-        f.write(js_text.replace("if(typeof window!=='undefined')window.BOOK_BANK=BOOK_BANK;", ""))
-        f.write("\nprocess.stdout.write(JSON.stringify(BOOK_BANK));\n")
+        f.write(body)
+        f.write("\nprocess.stdout.write(JSON.stringify(%s));\n" % var)
         tmp = f.name
     try:
         r = subprocess.run(["node", tmp], capture_output=True, text=True, encoding="utf-8")
@@ -114,6 +119,22 @@ def main():
         "data": base64.b64encode(body).decode(),
         "keys": keys,
     }))
+
+    # 2-2) 기출 문항(exams.js) 도 같은 CK 로 잠근다.
+    #      국가기술자격 기출이지만 전사 출처가 교재(제2편 문제편)라 평문으로 올리지 않는다.
+    #      키를 따로 두지 않으므로 암호 한 번이면 교재 문항과 기출이 함께 열린다.
+    n_ex = 0
+    if os.path.exists(EXSRC):
+        ex_payload = extract_json(io.open(EXSRC, encoding="utf-8").read(), "EXAMS")
+        ex_rows = json.loads(ex_payload)
+        n_ex = sum(len(r.get("q") or []) for r in ex_rows)
+        ex_gz = gzip.compress(ex_payload.encode("utf-8"), 9)
+        n3 = secrets.token_bytes(12)
+        io.open(EXOUT, "wb").write(n3 + AESGCM(CK).encrypt(n3, ex_gz, None))
+        print("  기출 %d회차 %d문항 -> exams.enc %dKB"
+              % (len(ex_rows), n_ex, os.path.getsize(EXOUT) // 1024))
+    else:
+        print("  ⚠ exams.js 가 없어 기출을 굽지 않았습니다")
 
     # 3) 교재에서 크롭한 그림 - 같은 CK 로 한 장씩 (화면에서 필요할 때만 받아서 푼다)
     #    코드가 실제로 참조하는 것만 굽는다. 안 쓰는 크롭까지 올릴 이유가 없다.
