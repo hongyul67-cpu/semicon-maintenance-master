@@ -10,8 +10,6 @@
 <script src="https://hongyul67-cpu.github.io/links/collector.js" data-tool="반도체설비보전 마스터"></script>
 <!-- 공용 연출 위젯 -->
 <script src="https://hongyul67-cpu.github.io/links/fx.js"></script>
-<!-- 수업모드: 우하단 🎓 버튼 / ?class=1 / F9 -->
-<script src="https://hongyul67-cpu.github.io/links/class-mode.js"></script>
 <!-- 계급(아이언~마스터) · 랭크 포인트 -->
 <script src="https://hongyul67-cpu.github.io/links/rank.js" data-tool="반도체설비보전 필기" data-pace="class"></script>
 <!-- 기출문제 데이터 — 평문으로 올리지 않는다.
@@ -20,9 +18,10 @@
 <script>window.EXAMS = [];</script>
 <!-- 수업 슬라이드 -->
 <script src="lesson.js"></script>
-<!-- 전자칠판 수업 도구 — 예전 board.html 이 index 안으로 들어왔습니다.
-     화면은 board-pro.js(automation-plc-exam 과 같은 파일)가 담당합니다. -->
-<script src="board-pro.js"></script>
+<!-- 수업 슬라이드 — 예전 board.html 이 index 안으로 들어왔습니다.
+     원고(lesson.js)는 이 저장소 것이고, 화면은 links 의 공용 board-pro.js 입니다.
+     저장소마다 사본을 두지 않습니다 — 고칠 일이 있으면 links 저장소에서 고칩니다. -->
+<script src="https://hongyul67-cpu.github.io/links/board-pro.js"></script>
 <style>
 :root{
   --bg:#0c1017; --panel:#161c27; --panel2:#1e2634; --line:#2c3648;
@@ -215,16 +214,12 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .footin{max-width:960px;margin:0 auto;display:flex;gap:9px}
 .footin .btn{flex:1;text-align:center}
 
-/* 전자칠판(bp-open)은 z-index 99000 인데 공용 떠있는 단추는 그보다 높아 슬라이드 위에 떠 있었다.
-   20번 슬라이드에서는 「📋 평가 기준」이 보기 하나를 덮었다 — 수업 중에는 모두 숨긴다. */
-body.bp-open .tr-btn,
-body.bp-open #rb-btn,
-body.bp-open .cm-launch,
-body.bp-open #bb-btn,
-body.bp-open #fxSnd,
-body.bp-open #rk-badge{display:none !important}
+/* 슬라이드가 열려 있는 동안 남는 떠 있는 위젯을 가린다.
+   뒤로 · 기록 초기화 · 계급 배지 · 평가 기준(#rb-btn)은 공용 board-pro.js 가 가린다.
+   이 도구가 따로 쓰는 소리(#fxSnd)만 여기서 가린다. */
+body.bp-open #fxSnd{display:none !important}
 
-/* 전자칠판: 요점이 7줄인 슬라이드 9장이 1920×1080에서 33~37px 넘쳐 스크롤이 생겼다.
+/* 수업 슬라이드: 요점이 7줄인 슬라이드 9장이 1920×1080에서 33~37px 넘쳐 스크롤이 생겼다.
    정답까지 연 상태(compact)에서 요점 줄 간격만 줄여 한 화면에 담는다. */
 #bp-in.compact .bp-pts{gap:min(.6vh,6px) !important}
 #bp-in.compact .bp-pts li{padding-top:min(.5vh,5px) !important;padding-bottom:min(.5vh,5px) !important}
@@ -313,7 +308,7 @@ img.encfail{border-color:var(--bad,#e66)}
   <div class="sect">🎓 수업용 · 교사가 앞에서 진행</div>
   <!-- 예전에는 board.html 로 나가는 링크와 index 안의 「수업 슬라이드」가 따로 있었다.
        둘 다 같은 원고(lesson.js)를 띄우는 것이어서 하나로 합쳤다. -->
-  <button class="big" data-go="board"><div class="bt">🖥️ 전자칠판 수업 도구 <span class="pill" id="p_lesson">–</span></div>
+  <button class="big" data-go="board"><div class="bt">📽️ 수업 슬라이드 열기 <span class="pill" id="p_lesson">–</span></div>
     <div class="bd">큰 화면 전용. 화면 위에 <b>바로 판서</b>(펜·형광펜·지우개)하고, 슬라이드·문제를 큰 글씨로 띄웁니다.
     타이머 · 번호 뽑기 · 가리개 포함. 교재 도해를 요점 → <b>발문</b> → 즉석 퀴즈로 진행합니다.</div></button>
 
@@ -1686,11 +1681,10 @@ function foot(html){const f=$('footbar');if(!html){f.classList.add('hidden');$('
   f.classList.remove('hidden');$('footin').innerHTML=html;liftFloats();}
 
 /* 아래쪽 고정 버튼 줄(.footbar)이 떠 있을 때, 화면 구석의 공용 떠있는 단추
-   (🧹기록 초기화·← 뒤로·📋평가 기준·🎓수업모드·🔇소리)를 그 위로 올린다.
+   (🧹기록 초기화·← 뒤로·📋평가 기준·🔇소리·계급 배지)를 그 위로 올린다.
    올리지 않으면 1180px 아래 화면에서 「다음 문제」 자리에 포개져
-   오른쪽 끝을 누르면 수업모드가, 왼쪽 끝을 누르면 기록 초기화가 눌린다. */
+   오른쪽 끝을 누르면 소리가, 왼쪽 끝을 누르면 기록 초기화가 눌린다. */
 function liftFloats(){
-  if(document.body.classList.contains('cm-on'))return;   /* 수업모드는 class-mode.js 몫 */
   const bar=$('footbar');
   const on = bar && !bar.classList.contains('hidden');
   /* 버튼 줄이 있으면 그 위에서, 없으면 화면 맨 아래에서 위로 쌓는다 */
@@ -1704,7 +1698,7 @@ function liftFloats(){
     });
   };
   column(['.tr-btn','#bb-btn','#rb-btn']);        /* 왼쪽 아래 */
-  column(['.cm-launch','#fxSnd','#rk-badge']);    /* 오른쪽 아래 */
+  column(['#fxSnd','#rk-badge']);                 /* 오른쪽 아래 */
 }
 /* 공용 단추는 늦게 붙고, 창 크기가 바뀌면 스스로 자리를 다시 잡는다 —
    그 뒤에 한 번 더 올려 준다 */
@@ -1778,7 +1772,7 @@ function renderFab(){
   const rf=$('railfill');if(rf)rf.style.width=(96*done/n)+'%';
 }
 function renderHome(){
-  /* 전자칠판 카드의 알약 — 원고 장수를 그대로 보여 준다 */
+  /* 수업 슬라이드 카드의 알약 — 원고 장수를 그대로 보여 준다 */
   { const n=(window.LESSON||[]).length; const el=$('p_lesson'); if(el) el.textContent = n ? (n+'장') : '–'; }
   const done=CHAPTERS.filter(c=>learned[c.id]).length;
   $('learnPill').textContent=`${done} / ${CHAPTERS.length}`;
@@ -2229,7 +2223,7 @@ function finish(){
 }
 
 /* =========================================================
-   전자칠판 수업 도구 — 예전 board.html 이 index 안으로 들어온 것
+   수업 슬라이드 — 예전 board.html 이 index 안으로 들어온 것
    화면은 board-pro.js(automation-plc-exam 과 같은 파일)가 담당한다.
    펜·형광펜·지우개·가리개·타이머·번호뽑기·전체화면이 그대로 있다.
 
@@ -2260,7 +2254,7 @@ async function openBoard(){
       run:{ kind:'blank' } }
   ];
   BoardPro.open({
-    title:'🖥️ 전자칠판 수업 도구',
+    title:'📽️ 반도체설비보전 · 수업 슬라이드',
     sub:'반도체설비보전기능사 · 큰 화면에서 판서하며 진행하는 수업용 화면입니다.<br>' +
         '화면 어디든 손이나 펜으로 바로 쓸 수 있고, 요점 속 <b>파란 빈칸</b>은 눌러야 답이 보입니다.',
     menu: menu,
@@ -2327,7 +2321,7 @@ function encImg(el){
       ENC_CACHE[nm]=url; el.src=url; el.classList.remove('encwait');})
     .catch(()=>{el.classList.add('encfail');el.alt='그림을 열지 못했습니다 ('+nm+')';});
 }
-function encUrl(nm){                     // 이름 → blob URL (전자칠판처럼 미리 필요할 때)
+function encUrl(nm){                     // 이름 → blob URL (수업 슬라이드처럼 미리 필요할 때)
   if(!nm) return Promise.resolve('');
   if(ENC_CACHE[nm]) return Promise.resolve(ENC_CACHE[nm]);
   if(!ENC_CK) return Promise.resolve('');
