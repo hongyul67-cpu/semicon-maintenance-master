@@ -1,7 +1,9 @@
 /* ══════════════════════════════════════════════════════════════
    수업 슬라이드 — 교사가 앞에서 끌고 가는 개념 설명용 덱
    구성: 제목 + 교재 도해 + 요점 + 발문(가려뒀다 공개) + 즉석퀴즈
-   그림 출처: 교재 이론편(1.pdf / 166.pdf)에서 크롭 → img/fig-*.jpg
+   그림 출처: 교재 이론편(1.pdf / 166.pdf)에서 크롭 → img/fig-*.jpg (암호 잠금 enc/)
+   직접 그린 그림은 figs.js 에 있다 — 배우기 카드와 같은 그림을 FIG.svgOf('키') 로 부른다 (그림19, 2026-09-30).
+   그래서 index.html 에서 fig.js · figs.js 를 이 파일보다 먼저 불러야 한다.
    ══════════════════════════════════════════════════════════════ */
 
 /* ── 직접 그리는 도해용 헬퍼 (교재 크롭 이미지가 없는 슬라이드에 쓴다) ── */
@@ -9,7 +11,10 @@ function SV(w, h, body){
   return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" style="max-height:44vh" '
        + 'xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">'
        + '<defs><marker id="ar2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">'
-       + '<path d="M0,0 L8,3 L0,6 z" fill="#334155"/></marker></defs>' + body + '</svg>';
+       + '<path d="M0,0 L8,3 L0,6 z" fill="#334155"/></marker></defs>'
+       /* 흰 종이 바탕 — 공용 뷰어의 그림 칸이 어두워서 바탕이 없으면 검은 글자가 사라진다 (그림19) */
+       + '<rect x="1" y="1" width="' + (w - 2) + '" height="' + (h - 2) + '" rx="12" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>'
+       + body + '</svg>';
 }
 function TX(x, y, t, o){
   o = o || {};
@@ -19,21 +24,7 @@ function TX(x, y, t, o){
 }
 
 const LESSON = [
-{t:'반도체 8대 공정 — 전체 흐름부터', svg:SV(520,250,
-  (function(){
-    var s=[['웨이퍼','#dbeafe','#2563eb'],['산화','#dcfce7','#059669'],['포토','#fef3c7','#b45309'],
-           ['식각','#fee2e2','#dc2626'],['증착','#ede9fe','#7c3aed'],['금속배선','#ffedd5','#ea580c'],
-           ['EDS','#e0f2fe','#0284c7'],['패키징','#f1f5f9','#475569']],o='';
-    for(var i=0;i<s.length;i++){
-      var x=18+ (i%4)*126, y=42+Math.floor(i/4)*88;
-      o+='<rect x="'+x+'" y="'+y+'" width="112" height="60" rx="10" fill="'+s[i][1]+'" stroke="'+s[i][2]+'" stroke-width="2"/>';
-      o+=TX(x+56,y+28,String(i+1),{a:'middle',size:13,b:1,c:s[i][2]});
-      o+=TX(x+56,y+48,s[i][0],{a:'middle',size:14,b:1});
-      if(i%4<3) o+='<line x1="'+(x+112)+'" y1="'+(y+30)+'" x2="'+(x+126)+'" y2="'+(y+30)+'" stroke="#94a3b8" stroke-width="2"/>';
-    }
-    return o;})() +
-  '<rect x="18" y="218" width="484" height="26" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,236,'앞 공정(웨이퍼~EDS)과 뒤 공정(패키징)으로 크게 나뉜다',{a:'middle',size:12.5,b:1})),
+{t:'반도체 8대 공정 — 전체 흐름부터', svg:(window.FIG ? FIG.svgOf('process8', { labels: false }) : ''),
  cap:'설비보전은 이 여덟 덩어리 어딘가의 장비를 지키는 일이다',
  pts:['반도체는 <b>웨이퍼 → 산화 → 포토 → 식각 → 증착 → 금속배선 → EDS → 패키징</b> 순으로 만들어진다.',
       '앞의 여섯은 웨이퍼 위에 회로를 <b>쌓아 올리는</b> 과정이고, 실제로는 이 과정을 {{반복}}한다.',
@@ -57,21 +48,7 @@ const LESSON = [
  anso:['다결정 실리콘 박판','단결정 실리콘 박판','비정질 실리콘','금속 실리콘'], ansa:1,
  anse:'결정 방향이 제각각이면 확산·식각이 위치마다 달라진다. 그래서 <b>단결정</b> 박판을 쓴다.'},
 
-{t:'클린룸 — 먼지 하나가 불량이다', svg:SV(520,250,
-  '<rect x="40" y="40" width="440" height="150" rx="8" fill="#f0f9ff" stroke="#0284c7" stroke-width="2"/>' +
-  (function(){var o='';for(var x=60;x<470;x+=34){
-    o+='<path d="M'+x+',48 L'+x+',176" stroke="#7dd3fc" stroke-width="1.4" stroke-dasharray="5 5"/>';
-    o+='<path d="M'+(x-5)+',170 L'+x+',180 L'+(x+5)+',170" fill="none" stroke="#7dd3fc" stroke-width="1.4"/>';}
-    return o;})() +
-  '<rect x="150" y="120" width="220" height="46" rx="6" fill="#fff" stroke="#334155" stroke-width="2"/>' +
-  TX(260,148,'공정 장비',{a:'middle',size:14,b:1}) +
-  TX(260,34,'위에서 아래로 흐르는 공기 (다운플로)',{a:'middle',size:12.5,b:1,c:'#0284c7'}) +
-  '<rect x="40" y="200" width="215" height="42" rx="6" fill="#fef3c7" stroke="#b45309"/>' +
-  TX(147,218,'HEPA / ULPA 필터',{a:'middle',size:13,b:1,c:'#b45309'}) +
-  TX(147,236,'0.3㎛ 입자를 걸러 낸다',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="265" y="200" width="215" height="42" rx="6" fill="#fee2e2" stroke="#dc2626"/>' +
-  TX(372,218,'양압 유지',{a:'middle',size:13,b:1,c:'#dc2626'}) +
-  TX(372,236,'밖에서 먼지가 못 들어오게',{a:'middle',size:11.5,c:'#6b7280'})),
+{t:'클린룸 — 먼지 하나가 불량이다', svg:(window.FIG ? FIG.svgOf('cleanroom', { labels: false }) : ''),
  cap:'사람이 가장 큰 오염원이다 — 방진복을 입는 이유',
  pts:['반도체 회로 선폭은 <b>먼지보다 작다</b>. 먼지 하나가 회로를 끊거나 이어 버려 곧바로 불량이 된다.',
       '그래서 공기를 <b>{{HEPA}}·ULPA 필터</b>로 걸러 <b>위에서 아래로</b> 흘려보낸다 — 다운플로 방식이다.',
@@ -84,22 +61,7 @@ const LESSON = [
  anso:['음압','양압','진공','상압'], ansa:1,
  anse:'<b>양압</b>입니다. 안쪽 압력을 높여 두면 틈이 생겨도 공기가 밖으로 나갑니다.'},
 
-{t:'진공 — 왜 공기를 빼고 작업하나', svg:SV(520,250,
-  '<rect x="40" y="44" width="440" height="52" rx="8" fill="#f8fafc" stroke="#334155" stroke-width="2"/>' +
-  TX(115,66,'대기압',{a:'middle',size:13,b:1}) + TX(115,86,'760 Torr',{a:'middle',size:12,c:'#6b7280'}) +
-  TX(245,66,'저진공',{a:'middle',size:13,b:1,c:'#2563eb'}) + TX(245,86,'로터리 펌프',{a:'middle',size:12,c:'#6b7280'}) +
-  TX(390,66,'고진공',{a:'middle',size:13,b:1,c:'#7c3aed'}) + TX(390,86,'터보 · 크라이오',{a:'middle',size:12,c:'#6b7280'}) +
-  '<line x1="60" y1="110" x2="470" y2="110" stroke="#334155" stroke-width="2" marker-end="url(#ar2)"/>' +
-  TX(265,128,'압력이 낮아질수록 다른 펌프가 필요하다',{a:'middle',size:12,c:'#6b7280'}) +
-  '<rect x="40" y="146" width="215" height="46" rx="6" fill="#dcfce7" stroke="#059669"/>' +
-  TX(147,166,'입자가 멀리 날아간다',{a:'middle',size:13,b:1,c:'#059669'}) +
-  TX(147,184,'증착 · 이온주입이 가능해진다',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="265" y="146" width="215" height="46" rx="6" fill="#fee2e2" stroke="#dc2626"/>' +
-  TX(372,166,'산소·수분과 반응 방지',{a:'middle',size:13,b:1,c:'#dc2626'}) +
-  TX(372,184,'오염 없는 깨끗한 막',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="40" y="202" width="440" height="40" rx="6" fill="#fef3c7" stroke="#b45309"/>' +
-  TX(260,220,'저진공으로 먼저 뽑고 → 고진공 펌프로 넘긴다',{a:'middle',size:13,b:1,c:'#b45309'}) +
-  TX(260,237,'고진공 펌프는 대기압에서 바로 돌리면 망가진다',{a:'middle',size:11.5,c:'#6b7280'})),
+{t:'진공 — 왜 공기를 빼고 작업하나', svg:(window.FIG ? FIG.svgOf('vacscale', { labels: false }) : ''),
  cap:'진공은 반도체 장비의 기본 환경이다',
  pts:['공기가 있으면 입자가 <b>서로 부딪혀</b> 멀리 못 간다. 진공에서는 곧게 날아가 원하는 자리에 닿는다.',
       '또 산소·수분과 반응하면 막이 오염되므로, <b>{{진공}}</b>에서 작업해야 깨끗한 막을 얻는다.',
@@ -113,22 +75,7 @@ const LESSON = [
  anso:['터보몰레큘러 펌프','크라이오 펌프','로터리 펌프','이온 펌프'], ansa:2,
  anse:'<b>로터리(회전날개) 펌프</b>입니다. 고진공 펌프는 저진공이 된 뒤에 씁니다.'},
 
-{t:'특수가스 — 반도체 공장이 위험한 이유', svg:SV(520,245,
-  '<rect x="30" y="38" width="148" height="86" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>' +
-  TX(104,62,'독성',{a:'middle',size:15,b:1,c:'#dc2626'}) +
-  TX(104,84,'AsH₃ · PH₃',{a:'middle',size:13}) + TX(104,104,'아주 적은 양도 위험',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="186" y="38" width="148" height="86" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="2"/>' +
-  TX(260,62,'가연 · 자연발화',{a:'middle',size:14,b:1,c:'#ea580c'}) +
-  TX(260,84,'SiH₄ (실란)',{a:'middle',size:13}) + TX(260,104,'공기 닿으면 불붙음',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="342" y="38" width="148" height="86" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>' +
-  TX(416,62,'부식성',{a:'middle',size:15,b:1,c:'#7c3aed'}) +
-  TX(416,84,'HF · Cl₂',{a:'middle',size:13}) + TX(416,104,'배관·인체 부식',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="30" y="138" width="460" height="44" rx="6" fill="#fef2f2" stroke="#dc2626"/>' +
-  TX(260,158,'가스 감지기 · 배기 · 스크러버는 항상 살아 있어야 한다',{a:'middle',size:13.5,b:1,c:'#dc2626'}) +
-  TX(260,175,'경보가 울리면 먼저 대피 — 확인은 그 다음',{a:'middle',size:12,c:'#6b7280'}) +
-  '<rect x="30" y="192" width="460" height="48" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,212,'질소(N₂)는 독성이 없어도 위험하다',{a:'middle',size:13,b:1}) +
-  TX(260,231,'밀폐 공간에서 산소를 밀어내 질식시킨다',{a:'middle',size:12,c:'#6b7280'})),
+{t:'특수가스 — 반도체 공장이 위험한 이유', svg:(window.FIG ? FIG.svgOf('gasline', { labels: false }) : ''),
  cap:'장비를 열기 전에 가스부터 확인한다',
  pts:['반도체 공정에는 <b>독성 · 가연성 · 부식성</b> 가스가 함께 쓰인다. 설비보전에서 가장 큰 위험 요소다.',
       '<b>실란(SiH₄)</b>은 공기에 닿으면 <b>스스로 불이 붙는</b> {{자연발화}}성 가스다.',
@@ -209,22 +156,7 @@ const LESSON = [
  anso:['금','구리','알루미늄','솔더 볼'], ansa:3,
  anse:'<b>솔더 볼</b>은 와이어가 아니라 플립 칩·BGA에 쓰이는 볼 형태 재료다.'},
 
-{t:'보전의 종류 — 고장 나기 전에 손본다', svg:SV(520,245,
-  '<rect x="30" y="40" width="145" height="92" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>' +
-  TX(102,64,'BM 사후보전',{a:'middle',size:14,b:1,c:'#dc2626'}) +
-  TX(102,88,'고장 난 뒤 고침',{a:'middle',size:12}) + TX(102,110,'라인 정지 손실 큼',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="188" y="40" width="145" height="92" rx="8" fill="#dcfce7" stroke="#059669" stroke-width="2"/>' +
-  TX(260,64,'PM 예방보전',{a:'middle',size:14,b:1,c:'#059669'}) +
-  TX(260,88,'주기마다 미리 점검',{a:'middle',size:12}) + TX(260,110,'가장 널리 쓴다',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="346" y="40" width="145" height="92" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>' +
-  TX(418,64,'CBM 예지보전',{a:'middle',size:14,b:1,c:'#2563eb'}) +
-  TX(418,88,'상태를 보고 판단',{a:'middle',size:12}) + TX(418,110,'진동·온도 감시',{a:'middle',size:11,c:'#6b7280'}) +
-  '<rect x="30" y="146" width="460" height="40" rx="6" fill="#fef3c7" stroke="#b45309"/>' +
-  TX(260,164,'CM 개량보전 — 고장이 안 나도록 설비 자체를 고친다',{a:'middle',size:13,b:1,c:'#b45309'}) +
-  TX(260,181,'같은 고장이 반복되면 부품이 아니라 설계를 바꾼다',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="30" y="196" width="460" height="44" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,216,'TPM — 전원이 참여하는 생산보전',{a:'middle',size:13.5,b:1}) +
-  TX(260,234,'운전자가 스스로 점검·급유·청소하는 자주보전이 핵심',{a:'middle',size:12,c:'#6b7280'})),
+{t:'보전의 종류 — 고장 나기 전에 손본다', svg:(window.FIG ? FIG.svgOf('maint4', { labels: false }) : ''),
  cap:'멈춘 뒤 고치는 것은 가장 비싼 방법이다',
  pts:['<b>{{BM}}(사후보전)</b> — 고장이 난 <b>뒤에</b> 고친다. 라인이 멈춰 손실이 가장 크다.',
       '<b>{{PM}}(예방보전)</b> — 정해진 <b>주기마다</b> 미리 점검·교체한다. 현장에서 가장 널리 쓴다.',
@@ -238,23 +170,7 @@ const LESSON = [
  anso:['사후보전(BM)','예방보전(PM)','예지보전(CBM)','개량보전(CM)'], ansa:1,
  anse:'<b>예방보전(PM)</b>입니다. 상태를 보고 판단하는 것은 예지보전(CBM)입니다.'},
 
-{t:'윤활 — 기름 한 방울이 수명을 정한다', svg:SV(520,240,
-  '<circle cx="140" cy="106" r="56" fill="none" stroke="#334155" stroke-width="2.5"/>' +
-  '<circle cx="140" cy="106" r="26" fill="#e2e8f0" stroke="#334155" stroke-width="2"/>' +
-  (function(){var o='';for(var i=0;i<8;i++){var a=i/8*Math.PI*2;
-    o+='<circle cx="'+(140+Math.cos(a)*41)+'" cy="'+(106+Math.sin(a)*41)+'" r="9" fill="#fff" stroke="#334155" stroke-width="1.6"/>';}
-    return o;})() +
-  TX(140,182,'구름 베어링',{a:'middle',size:12.5,b:1}) +
-  '<rect x="230" y="46" width="260" height="52" rx="8" fill="#dcfce7" stroke="#059669"/>' +
-  TX(360,68,'윤활유 — 냉각까지 함께',{a:'middle',size:13.5,b:1,c:'#059669'}) +
-  TX(360,88,'고속 · 열이 많은 곳',{a:'middle',size:12,c:'#6b7280'}) +
-  '<rect x="230" y="106" width="260" height="52" rx="8" fill="#fef3c7" stroke="#b45309"/>' +
-  TX(360,128,'그리스 — 오래 붙어 있다',{a:'middle',size:13.5,b:1,c:'#b45309'}) +
-  TX(360,148,'저속 · 급유가 어려운 곳',{a:'middle',size:12,c:'#6b7280'}) +
-  '<rect x="30" y="176" width="460" height="26" rx="6" fill="#fef2f2" stroke="#dc2626"/>' +
-  TX(260,194,'너무 많이 넣으면 오히려 열이 난다 — 규정량을 지킨다',{a:'middle',size:12.5,b:1,c:'#dc2626'}) +
-  '<rect x="30" y="208" width="460" height="28" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,227,'다른 종류의 그리스를 섞지 않는다 — 굳거나 분리된다',{a:'middle',size:12.5,b:1})),
+{t:'윤활 — 기름 한 방울이 수명을 정한다', svg:(window.FIG ? FIG.svgOf('lube', { labels: false }) : ''),
  cap:'윤활은 마찰만 줄이는 것이 아니다',
  pts:['윤활의 목적은 <b>마찰·마모 감소</b>만이 아니다 — <b>{{냉각}} · 방청 · 밀봉 · 이물질 배출</b>도 함께 한다.',
       '<b>윤활유</b>는 흐르면서 열을 가져가므로 <b>고속</b>·발열이 많은 곳에 쓴다.',
@@ -268,21 +184,7 @@ const LESSON = [
  anso:['마찰 감소','냉각','방청','전기 절연 파괴'], ansa:3,
  anse:'윤활은 마찰 감소·<b>냉각·방청·밀봉·이물질 배출</b>을 합니다.'},
 
-{t:'베어링과 축 — 고장이 잦은 자리', svg:SV(520,245,
-  '<rect x="40" y="60" width="180" height="80" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>' +
-  TX(130,84,'구름 베어링',{a:'middle',size:14,b:1,c:'#2563eb'}) +
-  TX(130,106,'볼 · 롤러가 구른다',{a:'middle',size:12}) +
-  TX(130,126,'마찰 작다 · 고속 가능',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="300" y="60" width="180" height="80" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="2"/>' +
-  TX(390,84,'미끄럼 베어링',{a:'middle',size:14,b:1,c:'#b45309'}) +
-  TX(390,106,'유막 위에서 미끄러짐',{a:'middle',size:12}) +
-  TX(390,126,'충격에 강하다 · 조용',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="30" y="156" width="460" height="38" rx="6" fill="#fee2e2" stroke="#dc2626"/>' +
-  TX(260,174,'이상 진단 — 소리 · 진동 · 온도 · 냄새',{a:'middle',size:13.5,b:1,c:'#dc2626'}) +
-  TX(260,190,'평소 정상 상태를 알아야 이상을 안다',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="30" y="202" width="460" height="38" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,220,'축 정렬(얼라인먼트)이 틀어지면 베어링이 빨리 깨진다',{a:'middle',size:12.5,b:1}) +
-  TX(260,236,'커플링 양쪽 축의 중심선을 맞춘다',{a:'middle',size:11.5,c:'#6b7280'})),
+{t:'베어링과 축 — 고장이 잦은 자리', svg:(window.FIG ? FIG.svgOf('bearing') : ''),
  cap:'회전부의 고장은 대부분 소리와 진동으로 먼저 알린다',
  pts:['<b>{{구름}} 베어링</b>은 볼·롤러가 굴러 마찰이 작다. 고속 회전에 유리해 가장 많이 쓴다.',
       '<b>미끄럼 베어링</b>은 <b>{{유막}}</b> 위에서 축이 미끄러진다. 충격에 강하고 조용하다.',
@@ -296,25 +198,7 @@ const LESSON = [
  anso:['소리 듣기','진동 측정','온도 확인','색깔 도장'], ansa:3,
  anse:'<b>소리·진동·온도·냄새</b>로 진단합니다. 축 정렬 확인도 함께 해야 합니다.'},
 
-{t:'공압 — 만들고 다듬어서 보낸다', svg:SV(520,240,
-  (function(){
-    var s=[['압축기','#dbeafe','#2563eb'],['냉각·건조','#dcfce7','#059669'],
-           ['필터','#fef3c7','#b45309'],['레귤레이터','#ede9fe','#7c3aed'],['루브리케이터','#ffedd5','#ea580c']],o='';
-    for(var i=0;i<s.length;i++){
-      var x=16+i*99;
-      o+='<rect x="'+x+'" y="64" width="88" height="62" rx="8" fill="'+s[i][1]+'" stroke="'+s[i][2]+'" stroke-width="2"/>';
-      o+=TX(x+44,92,String(i+1),{a:'middle',size:12,b:1,c:s[i][2]});
-      o+=TX(x+44,112,s[i][0],{a:'middle',size:11.5,b:1});
-      if(i<4) o+='<line x1="'+(x+88)+'" y1="95" x2="'+(x+99)+'" y2="95" stroke="#94a3b8" stroke-width="2"/>';
-    }
-    return o;})() +
-  TX(260,48,'공기를 만들어 쓸 수 있게 다듬는 순서',{a:'middle',size:13,b:1}) +
-  '<rect x="30" y="146" width="460" height="40" rx="6" fill="#fef2f2" stroke="#dc2626"/>' +
-  TX(260,164,'수분은 공압의 가장 큰 적 — 녹·오작동·동파',{a:'middle',size:13.5,b:1,c:'#dc2626'}) +
-  TX(260,181,'드레인(응축수)을 정기적으로 빼야 한다',{a:'middle',size:11.5,c:'#6b7280'}) +
-  '<rect x="30" y="196" width="460" height="42" rx="6" fill="#f8fafc" stroke="#cbd5e1"/>' +
-  TX(260,215,'속도 조절은 배기 쪽을 조인다 (미터아웃)',{a:'middle',size:13,b:1}) +
-  TX(260,232,'공급 쪽을 조이면 움직임이 튀어 불안정하다',{a:'middle',size:11.5,c:'#6b7280'})),
+{t:'공압 — 만들고 다듬어서 보낸다', svg:(window.FIG ? FIG.svgOf('airline', { labels: false }) : ''),
  cap:'FRL 세트 — 필터·레귤레이터·루브리케이터',
  pts:['공압은 <b>압축기 → 냉각·건조 → 필터 → 레귤레이터 → 루브리케이터</b> 순으로 다듬어 보낸다.',
       '압축된 공기에는 반드시 <b>{{수분}}</b>이 생긴다. 녹·오작동·겨울철 동파의 원인이다.',

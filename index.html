@@ -16,6 +16,10 @@
      국가기술자격 기출이지만 전사 출처가 교재(제2편 문제편)라 exams.enc 로 굽고,
      잠금을 푼 뒤에 unlockBank() 가 채운다(bank.enc 와 같은 키). -->
 <script>window.EXAMS = [];</script>
+<!-- 그림 — 공용 도우미(links/fig.js) + 이 도구의 그림 모음(figs.js). 배우기 카드와 수업 슬라이드가 같은 그림을 쓴다.
+     lesson.js 가 FIG.svgOf 를 부르므로 반드시 lesson.js 보다 먼저. -->
+<script src="https://hongyul67-cpu.github.io/links/fig.js"></script>
+<script src="figs.js"></script>
 <!-- 수업 슬라이드 -->
 <script src="lesson.js"></script>
 <!-- 수업 슬라이드 — 예전 board.html 이 index 안으로 들어왔습니다.
@@ -153,6 +157,8 @@ em.hi2{color:var(--gold);font-style:normal;font-weight:700}
 .rk-tbl th{background:var(--panel2);color:var(--si);font-weight:800}
 .rk-tbl tr.cur{background:rgba(124,198,255,.10)}
 /* ── 배우기 본문 도해 (교재 원본 크롭) ── */
+.lfigs{margin:14px 0 6px}
+.lfigs figcaption{color:var(--dim)}
 .lfig{margin:13px 0 4px;padding:0}
 .lfig img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto;
   background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px}
@@ -1831,6 +1837,13 @@ document.querySelectorAll('[data-go]').forEach(b=>{
    ========================================================= */
 let lc={ci:0,pi:0};
 function startLearn(ci){lc={ci,pi:0};show('scLearn');renderLearn();}
+/* 배우기 그림 — figs.js 에서 cards 에 이 카드 제목이 들어 있는 그림(직접 그린 SVG · 잠금 없음).
+   아래 교재 크롭 사진(fig:)은 암호를 풀어야 보이고, 이 그림은 누구나 본다. 누르면 크게 보인다. */
+function learnFigs(h){
+  if(!window.FIG||!window.FIGS)return '';
+  const ks=Object.keys(FIGS).filter(k=>(FIGS[k].cards||[]).includes(h));
+  return ks.length?`<div class="lfigs">${FIG.gallery(ks)}</div>`:'';
+}
 function renderLearn(){
   const ch=CHAPTERS[lc.ci],card=ch.cards[lc.pi];
   $('lcard').innerHTML=`
@@ -1838,6 +1851,7 @@ function renderLearn(){
     <h3>${card.h}</h3>
     <div class="lead">${card.lead}</div>
     <div class="lbody">${card.body}</div>
+    ${learnFigs(card.h)}
     ${(card.fig||[]).map(f=>`<figure class="lfig"><img data-enc="${f[0]}" alt="${f[1]}" loading="lazy"><figcaption>${f[1]}</figcaption></figure>`).join('')}
     ${card.tip?`<div class="tipbox">💡 ${card.tip}</div>`:''}`;
   $('ldots').innerHTML=ch.cards.map((_,i)=>`<div class="dot ${i<=lc.pi?'on':''}"></div>`).join('');
