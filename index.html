@@ -251,7 +251,7 @@ img.encfail{border-color:var(--bad,#e66)}
 <div class="topbar"><div class="topin">
   <div class="logo">🔬 반도체설비보전 <span>마스터</span></div>
   <div class="tbspace"></div>
-  <button class="tbtn" id="btnHome">🏠 홈</button>
+  <button class="tbtn" id="btnHome">🏠 처음으로</button>
 </div></div>
 
 <div class="wrap">
@@ -357,7 +357,7 @@ img.encfail{border-color:var(--bad,#e66)}
     <div id="resWrong"></div>
     <div class="row" style="margin-top:16px">
       <button class="btn" id="resRetry" style="flex:1">🔁 다시 풀기</button>
-      <button class="btn ghost" id="resHome" style="flex:1">🏠 홈으로</button>
+      <button class="btn ghost" id="resHome" style="flex:1">🏠 처음으로</button>
     </div>
     <button class="btn" id="resSubmit" style="width:100%;margin-top:9px;background:linear-gradient(180deg,#3ad995,#22a873)">
       📨 선생님께 결과 제출
@@ -1746,7 +1746,7 @@ function openRank(){
     </table></div>`:''}
   <div class="card"><button class="btn ghost" id="rkReset" style="width:100%">↺ 계급 초기화</button>
     <p class="note" style="margin-top:7px">이 기기에만 저장됩니다. 초기화하면 되돌릴 수 없습니다.</p></div>`;
-  show('scRank'); foot(`<button class="btn" style="width:100%" onclick="goHome()">🏠 홈으로</button>`);
+  show('scRank'); foot(`<button class="btn" style="width:100%" onclick="goHome()">🏠 처음으로</button>`);
   $('rkReset').onclick=()=>{ if(confirm('계급과 RP를 모두 초기화할까요?')){ Rank.reset(); openRank(); } };
 }
 document.addEventListener('click',e=>{ if(e.target&&e.target.id==='btnRank') openRank(); });
